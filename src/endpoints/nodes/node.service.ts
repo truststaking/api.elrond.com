@@ -1,22 +1,22 @@
-import { forwardRef, Inject, Injectable } from "@nestjs/common";
-import { GatewayService } from "src/common/gateway.service";
-import { Node } from "src/endpoints/nodes/entities/node";
-import { NodeType } from "./entities/node.type";
-import { NodeStatus } from "./entities/node.status";
-import { Queue } from "./entities/queue";
-import { VmQueryService } from "src/endpoints/vm.query/vm.query.service";
-import { ApiConfigService } from "src/common/api.config.service";
-import { CachingService } from "src/common/caching.service";
-import { KeybaseService } from "src/common/keybase.service";
-import { NodeFilter } from "./entities/node.filter";
-import { ProviderService } from "../providers/provider.service";
-import { StakeService } from "../stake/stake.service";
-import { SortOrder } from "src/common/entities/sort.order";
-import { QueryPagination } from "src/common/entities/query.pagination";
-import { BlockService } from "../blocks/block.service";
-import { KeybaseState } from "src/common/entities/keybase.state";
-import { Constants } from "src/utils/constants";
-import { AddressUtils } from "src/utils/address.utils";
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { GatewayService } from 'src/common/gateway.service';
+import { Node } from 'src/endpoints/nodes/entities/node';
+import { NodeType } from './entities/node.type';
+import { NodeStatus } from './entities/node.status';
+import { Queue } from './entities/queue';
+import { VmQueryService } from 'src/endpoints/vm.query/vm.query.service';
+import { ApiConfigService } from 'src/common/api.config.service';
+import { CachingService } from 'src/common/caching.service';
+import { KeybaseService } from 'src/common/keybase.service';
+import { NodeFilter } from './entities/node.filter';
+import { ProviderService } from '../providers/provider.service';
+import { StakeService } from '../stake/stake.service';
+import { SortOrder } from 'src/common/entities/sort.order';
+import { QueryPagination } from 'src/common/entities/query.pagination';
+import { BlockService } from '../blocks/block.service';
+import { KeybaseState } from 'src/common/entities/keybase.state';
+import { Constants } from 'src/utils/constants';
+import { AddressUtils } from 'src/utils/address.utils';
 
 @Injectable()
 export class NodeService {
@@ -30,73 +30,79 @@ export class NodeService {
     private readonly stakeService: StakeService,
     @Inject(forwardRef(() => ProviderService))
     private readonly providerService: ProviderService,
-    private readonly blockService: BlockService
+    private readonly blockService: BlockService,
   ) {}
 
   private getIssues(node: Node, version: string): string[] {
     const issues: string[] = [];
-  
+
     // if (node.totalUpTimeSec === 0) {
     //   issues.push('offlineSinceGenesis'); // Offline since genesis
     // }
-  
+
     if (version !== node.version) {
       issues.push('versionMismatch'); // Outdated client version
     }
-  
+
     // if (node.receivedShardID !== node.computedShardID && node.peerType === 'eligible') {
     //   issues.push('shuffledOut'); // Shuffled out restart failed
     // }
-  
+
     return issues;
-  };
+  }
 
   async getNode(bls: string): Promise<Node | undefined> {
-    let allNodes = await this.getAllNodes();
-    return allNodes.find(x => x.bls === bls);
+    const allNodes = await this.getAllNodes();
+    return allNodes.find((x) => x.bls === bls);
   }
 
   async getNodeCount(query: NodeFilter): Promise<number> {
-    let allNodes = await this.getFilteredNodes(query);
+    const allNodes = await this.getFilteredNodes(query);
     return allNodes.length;
   }
 
   async getNodeVersions(): Promise<NodeVersions> {
-    let allNodes = await this.getAllNodes();
+    const allNodes = await this.getAllNodes();
 
     const data = allNodes
-        .filter(({ type }) => type === NodeType.validator)
-        .reduce((accumulator: any, item) => {
-          if (item.version) {
-            if (!accumulator[item.version]) {
-              accumulator[item.version] = 1;
-            } else {
-              accumulator[item.version] += 1;
-            }
+      .filter(({ type }) => type === NodeType.validator)
+      .reduce((accumulator: any, item) => {
+        if (item.version) {
+          if (!accumulator[item.version]) {
+            accumulator[item.version] = 1;
+          } else {
+            accumulator[item.version] += 1;
           }
+        }
 
-          return accumulator;
-        }, {});
+        return accumulator;
+      }, {});
 
-      const sum = Object.keys(data).reduce((accumulator, item) => {
-        return accumulator + data[item];
-      }, 0);
+    const sum = Object.keys(data).reduce((accumulator, item) => {
+      return accumulator + data[item];
+    }, 0);
 
-      Object.keys(data).forEach((key) => {
-        data[key] = parseFloat((data[key] / sum).toFixed(2));
-      });
+    Object.keys(data).forEach((key) => {
+      data[key] = parseFloat((data[key] / sum).toFixed(2));
+    });
 
-      return data;
+    return data;
   }
 
   private async getFilteredNodes(query: NodeFilter): Promise<Node[]> {
-    let allNodes = await this.getAllNodes();
+    const allNodes = await this.getAllNodes();
 
-    let filteredNodes = allNodes.filter(node => {
+    const filteredNodes = allNodes.filter((node) => {
       if (query.search !== undefined) {
-        const nodeMatches = node.bls.toLowerCase().includes(query.search.toLowerCase());
-        const nameMatches = node.name && node.name.toLowerCase().includes(query.search.toLowerCase());
-        const versionMatches = node.version && node.version.toLowerCase().includes(query.search.toLowerCase());
+        const nodeMatches = node.bls
+          .toLowerCase()
+          .includes(query.search.toLowerCase());
+        const nameMatches =
+          node.name &&
+          node.name.toLowerCase().includes(query.search.toLowerCase());
+        const versionMatches =
+          node.version &&
+          node.version.toLowerCase().includes(query.search.toLowerCase());
 
         if (!nodeMatches && !nameMatches && !versionMatches) {
           return false;
@@ -119,7 +125,12 @@ export class NodeService {
         return false;
       }
 
-      if (query.issues !== undefined && (query.issues === true ? node.issues.length === 0 : node.issues.length > 0)) {
+      if (
+        query.issues !== undefined &&
+        (query.issues === true
+          ? node.issues.length === 0
+          : node.issues.length > 0)
+      ) {
         return false;
       }
 
@@ -162,31 +173,39 @@ export class NodeService {
     return filteredNodes;
   }
 
-  async getNodes(queryPagination: QueryPagination, query: NodeFilter): Promise<Node[]> {
+  async getNodes(
+    queryPagination: QueryPagination,
+    query: NodeFilter,
+  ): Promise<Node[]> {
     const { from, size } = queryPagination;
 
-    let filteredNodes = await this.getFilteredNodes(query);
+    const filteredNodes = await this.getFilteredNodes(query);
 
     return filteredNodes.slice(from, from + size);
   }
 
   async getAllNodes(): Promise<Node[]> {
-    return await this.cachingService.getOrSetCache('nodes', async () => await this.getAllNodesRaw(), Constants.oneHour(), Constants.oneMinute());
+    return await this.cachingService.getOrSetCache(
+      'nodes',
+      async () => await this.getAllNodesRaw(),
+      Constants.oneHour(),
+      Constants.oneMinute(),
+    );
   }
 
   async getAllNodesRaw(): Promise<Node[]> {
-    let nodes = await this.getHeartbeat();
-    let queue = await this.getQueue();
+    const nodes = await this.getHeartbeat();
+    const queue = await this.getQueue();
 
-    for (let queueItem of queue) {
-      const node = nodes.find(node => node.bls === queueItem.bls);
-  
+    for (const queueItem of queue) {
+      const node = nodes.find((node) => node.bls === queueItem.bls);
+
       if (node) {
         node.type = NodeType.validator;
         node.status = NodeStatus.queued;
         node.position = queueItem.position;
       } else {
-        let newNode = new Node();
+        const newNode = new Node();
         newNode.bls = queueItem.bls;
         newNode.position = queueItem.position;
         newNode.type = NodeType.validator;
@@ -196,9 +215,10 @@ export class NodeService {
       }
     }
 
-    const keybases: { [key: string]: KeybaseState } | undefined = await this.keybaseService.getCachedNodeKeybases();
+    const keybases: { [key: string]: KeybaseState } | undefined =
+      await this.keybaseService.getCachedNodeKeybases();
 
-    for (let node of nodes) {
+    for (const node of nodes) {
       node.identity = undefined;
 
       if (keybases && keybases[node.bls] && keybases[node.bls].confirmed) {
@@ -206,12 +226,14 @@ export class NodeService {
       }
     }
 
-    const blses = nodes.filter(node => node.type === NodeType.validator).map(node => node.bls);
+    const blses = nodes
+      .filter((node) => node.type === NodeType.validator)
+      .map((node) => node.bls);
     const epoch = await this.blockService.getCurrentEpoch();
     const owners = await this.getOwners(blses, epoch);
 
-    for (let [index, bls] of blses.entries()) {
-      const node = nodes.find(node => node.bls === bls);
+    for (const [index, bls] of blses.entries()) {
+      const node = nodes.find((node) => node.bls === bls);
       if (node) {
         node.owner = owners[index];
       }
@@ -221,7 +243,9 @@ export class NodeService {
 
     nodes.forEach((node) => {
       if (node.type === NodeType.validator) {
-        const provider = providers.find(({ provider }) => provider === node.owner);
+        const provider = providers.find(
+          ({ provider }) => provider === node.owner,
+        );
 
         if (provider) {
           node.provider = provider.provider;
@@ -237,7 +261,7 @@ export class NodeService {
     let addresses = nodes
       .filter(({ type }) => type === NodeType.validator)
       .map(({ owner, provider }) => (provider ? provider : owner));
-  
+
     addresses = [...new Set(addresses)];
 
     const stakes = await this.stakeService.getStakes(addresses);
@@ -260,14 +284,14 @@ export class NodeService {
   async getOwners(blses: string[], epoch: number) {
     const keys = blses.map((bls) => `owner:${epoch}:${bls}`);
 
-    let cached = await this.cachingService.batchGetCache(keys);
+    const cached = await this.cachingService.batchGetCache(keys);
 
     const missing = cached
       .map((element, index) => (element === null ? index : false))
       .filter((element) => element !== false)
-      .map(element => element as number);
+      .map((element) => element as number);
 
-    let owners: any = {};
+    const owners: any = {};
 
     if (missing.length) {
       for (const index of missing) {
@@ -278,7 +302,7 @@ export class NodeService {
           if (owner) {
             const blses = await this.getOwnerBlses(owner);
 
-            blses.forEach(bls => {
+            blses.forEach((bls) => {
               owners[bls] = owner;
             });
           }
@@ -291,18 +315,24 @@ export class NodeService {
         ttls: new Array(Object.keys(owners).length).fill(60 * 60 * 24), // 24h
       };
 
-      await this.cachingService.batchSetCache(params.keys, params.values, params.ttls);
+      await this.cachingService.batchSetCache(
+        params.keys,
+        params.values,
+        params.ttls,
+      );
     }
 
-    return blses.map((bls, index) => (missing.includes(index) ? owners[bls] : cached[index]));
-  };
-  
+    return blses.map((bls, index) =>
+      missing.includes(index) ? owners[bls] : cached[index],
+    );
+  }
+
   async getBlsOwner(bls: string): Promise<string | undefined> {
-    let result = await this.vmQueryService.vmQuery(
+    const result = await this.vmQueryService.vmQuery(
       this.apiConfigService.getStakingContractAddress(),
       'getOwner',
       this.apiConfigService.getAuctionContractAddress(),
-      [ bls ],
+      [bls],
     );
 
     if (!result) {
@@ -310,34 +340,39 @@ export class NodeService {
     }
 
     const [encodedOwnerBase64] = result;
-  
-    return AddressUtils.bech32Encode(Buffer.from(encodedOwnerBase64, 'base64').toString('hex'));
-  };
+
+    return AddressUtils.bech32Encode(
+      Buffer.from(encodedOwnerBase64, 'base64').toString('hex'),
+    );
+  }
 
   async getOwnerBlses(owner: string): Promise<string[]> {
     const getBlsKeysStatusListEncoded = await this.vmQueryService.vmQuery(
       this.apiConfigService.getAuctionContractAddress(),
       'getBlsKeysStatus',
       this.apiConfigService.getAuctionContractAddress(),
-      [ AddressUtils.bech32Decode(owner) ],
+      [AddressUtils.bech32Decode(owner)],
     );
-  
+
     if (!getBlsKeysStatusListEncoded) {
       return [];
     }
-  
-    return getBlsKeysStatusListEncoded.reduce((result: any[], _: string, index: number, array: string[]) => {
-      if (index % 2 === 0) {
-        const [blsBase64, _] = array.slice(index, index + 2);
-  
-        const bls = Buffer.from(blsBase64, 'base64').toString('hex');
-  
-        result.push(bls);
-      }
-  
-      return result;
-    }, []);
-  };
+
+    return getBlsKeysStatusListEncoded.reduce(
+      (result: any[], _: string, index: number, array: string[]) => {
+        if (index % 2 === 0) {
+          const [blsBase64, _] = array.slice(index, index + 2);
+
+          const bls = Buffer.from(blsBase64, 'base64').toString('hex');
+
+          result.push(bls);
+        }
+
+        return result;
+      },
+      [],
+    );
+  }
 
   async getQueue(): Promise<Queue[]> {
     const queueEncoded = await this.vmQueryService.vmQuery(
@@ -350,44 +385,55 @@ export class NodeService {
       return [];
     }
 
-    return queueEncoded.reduce((result: Queue[], _: any, index: number, array: any) => {
-      if (index % 3 === 0) {
-        const [blsBase64, rewardsAddressBase64, nonceBase64] = array.slice(index, index + 3);
+    return queueEncoded.reduce(
+      (result: Queue[], _: any, index: number, array: any) => {
+        if (index % 3 === 0) {
+          const [blsBase64, rewardsAddressBase64, nonceBase64] = array.slice(
+            index,
+            index + 3,
+          );
 
-        const bls = Buffer.from(blsBase64, 'base64').toString('hex');
+          const bls = Buffer.from(blsBase64, 'base64').toString('hex');
 
-        const rewardsAddressHex = Buffer.from(rewardsAddressBase64, 'base64').toString('hex');
-        const rewardsAddress = AddressUtils.bech32Encode(rewardsAddressHex);
+          const rewardsAddressHex = Buffer.from(
+            rewardsAddressBase64,
+            'base64',
+          ).toString('hex');
+          const rewardsAddress = AddressUtils.bech32Encode(rewardsAddressHex);
 
-        const nonceHex = Buffer.from(nonceBase64, 'base64').toString('hex');
-        const nonce = parseInt(BigInt(nonceHex ? '0x' + nonceHex : nonceHex).toString());
+          const nonceHex = Buffer.from(nonceBase64, 'base64').toString('hex');
+          const nonce = parseInt(
+            BigInt(nonceHex ? '0x' + nonceHex : nonceHex).toString(),
+          );
 
-        result.push({ bls, nonce, rewardsAddress, position: index / 3 + 1 });
-      }
+          result.push({ bls, nonce, rewardsAddress, position: index / 3 + 1 });
+        }
 
-      return result;
-    }, []);
+        return result;
+      },
+      [],
+    );
   }
 
   async getHeartbeat(): Promise<Node[]> {
-    const [
-      { heartbeats },
-      { statistics },
-      { config }
-    ] = await Promise.all([
+    const [{ heartbeats }, { statistics }, { config }] = await Promise.all([
       this.gatewayService.get('node/heartbeatstatus'),
       this.gatewayService.get('validator/statistics'),
-      this.gatewayService.get('network/config')
+      this.gatewayService.get('network/config'),
     ]);
 
-    let nodes: Node[] = [];
+    const nodes: Node[] = [];
 
     const blses = [
-      ...new Set([...Object.keys(statistics), ...heartbeats.map((item: any) => item.publicKey)]),
+      ...new Set([
+        ...Object.keys(statistics),
+        ...heartbeats.map((item: any) => item.publicKey),
+      ]),
     ];
 
     for (const bls of blses) {
-      const heartbeat = heartbeats.find((beat: any) => beat.publicKey === bls) || {};
+      const heartbeat =
+        heartbeats.find((beat: any) => beat.publicKey === bls) || {};
       const statistic = statistics[bls] || {};
 
       const item = { ...heartbeat, ...statistic };
@@ -427,7 +473,7 @@ export class NodeService {
       let nodeType: NodeType | undefined = undefined;
       let nodeStatus: NodeStatus | undefined = undefined;
 
-      let status = validatorStatus ? validatorStatus : peerType;
+      const status = validatorStatus ? validatorStatus : peerType;
       nodeStatus = status;
 
       if (status === 'observer') {
@@ -444,7 +490,8 @@ export class NodeService {
         bls,
         name,
         version: version ? version.split('-')[0].split('/')[0] : '',
-        identity: identity && identity !== '' ? identity.toLowerCase() : identity,
+        identity:
+          identity && identity !== '' ? identity.toLowerCase() : identity,
         rating: parseFloat(parseFloat(rating).toFixed(2)),
         tempRating: parseFloat(parseFloat(tempRating).toFixed(2)),
         ratingModifier: ratingModifier ? ratingModifier : 0,
@@ -469,14 +516,15 @@ export class NodeService {
         validatorIgnoredSignatures,
         validatorSuccess,
         issues: [],
-        position: 0
+        position: 0,
       };
 
       if (node.uptimeSec === 0 && item.downtimeSec === 0) {
         node.uptime = item.online ? 100 : 0;
         node.downtime = item.online ? 0 : 100;
       } else {
-        const uptime = (node.uptimeSec * 100) / (node.uptimeSec + node.downtimeSec);
+        const uptime =
+          (node.uptimeSec * 100) / (node.uptimeSec + node.downtimeSec);
         node.uptime = parseFloat(uptime.toFixed(2));
         node.downtime = parseFloat((100 - uptime).toFixed(2));
       }
@@ -485,7 +533,10 @@ export class NodeService {
         node.shard = undefined;
       }
 
-      node.issues = this.getIssues(node, config.erd_latest_tag_software_version);
+      node.issues = this.getIssues(
+        node,
+        config.erd_latest_tag_software_version,
+      );
 
       nodes.push(node);
     }

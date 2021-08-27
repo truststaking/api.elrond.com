@@ -1,15 +1,15 @@
-import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
-import { ApiConfigService } from "src/common/api.config.service";
-import { CachingService } from "src/common/caching.service";
-import { GatewayService } from "src/common/gateway.service";
-import { VmQueryService } from "src/endpoints/vm.query/vm.query.service";
-import { NodeStatus } from "../nodes/entities/node.status";
-import { NodeType } from "../nodes/entities/node.type";
-import { NodeService } from "../nodes/node.service";
-import { Stake } from "./entities/stake";
-import { StakeTopup } from "./entities/stake.topup";
-import { Constants } from "src/utils/constants";
-import { AddressUtils } from "src/utils/address.utils";
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { ApiConfigService } from 'src/common/api.config.service';
+import { CachingService } from 'src/common/caching.service';
+import { GatewayService } from 'src/common/gateway.service';
+import { VmQueryService } from 'src/endpoints/vm.query/vm.query.service';
+import { NodeStatus } from '../nodes/entities/node.status';
+import { NodeType } from '../nodes/entities/node.type';
+import { NodeService } from '../nodes/node.service';
+import { Stake } from './entities/stake';
+import { StakeTopup } from './entities/stake.topup';
+import { Constants } from 'src/utils/constants';
+import { AddressUtils } from 'src/utils/address.utils';
 
 @Injectable()
 export class StakeService {
@@ -30,7 +30,7 @@ export class StakeService {
     return await this.cachingService.getOrSetCache(
       'stake',
       async () => await this.getGlobalStakeRaw(),
-      Constants.oneMinute() * 10
+      Constants.oneMinute() * 10,
     );
   }
 
@@ -38,16 +38,20 @@ export class StakeService {
     const [
       validators,
       {
-        metrics: 
-        {   
+        metrics: {
           erd_total_base_staked_value: totalBaseStaked,
-          erd_total_top_up_value: totalTopUp,        
+          erd_total_top_up_value: totalTopUp,
         },
       },
-    ] = await Promise.all([this.getValidators(), this.gatewayService.get('network/economics')]);
+    ] = await Promise.all([
+      this.getValidators(),
+      this.gatewayService.get('network/economics'),
+    ]);
 
-    const totalStaked = BigInt(BigInt(totalBaseStaked) + BigInt(totalTopUp)).toString();
-    
+    const totalStaked = BigInt(
+      BigInt(totalBaseStaked) + BigInt(totalTopUp),
+    ).toString();
+
     return { ...validators, totalStaked };
   }
 
@@ -59,39 +63,47 @@ export class StakeService {
       ),
       this.nodeService.getAllNodes(),
     ]);
-  
+
     return {
       totalValidators: nodes.filter(
-        ({ type, status }) => type === NodeType.validator && [ NodeStatus.eligible, NodeStatus.waiting ].includes(status ?? NodeStatus.unknown)
+        ({ type, status }) =>
+          type === NodeType.validator &&
+          [NodeStatus.eligible, NodeStatus.waiting].includes(
+            status ?? NodeStatus.unknown,
+          ),
       ).length,
       activeValidators: nodes.filter(
         ({ type, status, online }) =>
-          type === NodeType.validator && [ NodeStatus.eligible, NodeStatus.waiting ].includes(status ?? NodeStatus.unknown) && online === true
+          type === NodeType.validator &&
+          [NodeStatus.eligible, NodeStatus.waiting].includes(
+            status ?? NodeStatus.unknown,
+          ) &&
+          online === true,
       ).length,
       queueSize: parseInt(Buffer.from(queueSize, 'base64').toString()),
     };
-  };
+  }
 
   async getStakes(addresses: string[]): Promise<Stake[]> {
     const stakes = await this.getStakedTopups(addresses);
-  
+
     const value: Stake[] = [];
-  
+
     stakes.forEach(({ stake, topUp, locked, blses }) => {
       blses.forEach((bls) => {
         value.push({ bls, stake, topUp, locked });
       });
     });
-  
+
     return value;
-  };
+  }
 
   async getStakedTopups(addresses: string[]) {
     return this.cachingService.batchProcess(
       addresses,
-      address => `stakeTopup:${address}`,
-      async address => await this.getStakedTopupRaw(address),
-      Constants.oneMinute() * 15
+      (address) => `stakeTopup:${address}`,
+      async (address) => await this.getStakedTopupRaw(address),
+      Constants.oneMinute() * 15,
     );
   }
 
@@ -102,7 +114,7 @@ export class StakeService {
         this.apiConfigService.getAuctionContractAddress(),
         'getTotalStakedTopUpStakedBlsKeys',
         this.apiConfigService.getAuctionContractAddress(),
-        [ AddressUtils.bech32Decode(address) ],
+        [AddressUtils.bech32Decode(address)],
       );
     } catch (error) {
       this.logger.log(error);
@@ -116,25 +128,29 @@ export class StakeService {
         locked: '0',
         numNodes: 0,
         address,
-        blses: []
+        blses: [],
       };
     }
-  
-    const [topUpBase64, stakedBase64, numNodesBase64, ...blsesBase64] = response || [];
-  
+
+    const [topUpBase64, stakedBase64, numNodesBase64, ...blsesBase64] =
+      response || [];
+
     const numNodesHex = Buffer.from(numNodesBase64, 'base64').toString('hex');
     const numNodes = BigInt(numNodesHex ? '0x' + numNodesHex : numNodesHex);
-  
+
     const topUpHex = Buffer.from(topUpBase64, 'base64').toString('hex');
     const totalTopUp = BigInt(topUpHex ? '0x' + topUpHex : topUpHex);
-  
+
     const stakedHex = Buffer.from(stakedBase64, 'base64').toString('hex');
-    const totalStaked = BigInt(stakedHex ? '0x' + stakedHex : stakedHex) - totalTopUp;
-  
+    const totalStaked =
+      BigInt(stakedHex ? '0x' + stakedHex : stakedHex) - totalTopUp;
+
     const totalLocked = totalStaked + totalTopUp;
-  
-    const blses = blsesBase64.map((nodeBase64) => Buffer.from(nodeBase64, 'base64').toString('hex'));
-  
+
+    const blses = blsesBase64.map((nodeBase64) =>
+      Buffer.from(nodeBase64, 'base64').toString('hex'),
+    );
+
     if (totalStaked.toString() === '0' && numNodes.toString() === '0') {
       return {
         topUp: '0',
@@ -148,7 +164,7 @@ export class StakeService {
       const topUp = String(totalTopUp / numNodes);
       const stake = String(totalStaked / numNodes);
       const locked = String(totalLocked / numNodes);
-  
+
       return {
         topUp,
         stake,
@@ -158,5 +174,5 @@ export class StakeService {
         blses,
       };
     }
-  };
+  }
 }

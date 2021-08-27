@@ -1,29 +1,29 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger';
 
 export class Provider {
   @ApiProperty()
-  provider: string = '';
+  provider = '';
 
   @ApiProperty()
   owner: string | null = null;
 
   @ApiProperty()
-  featured: boolean = false;
+  featured = false;
 
   @ApiProperty()
-  serviceFee: number = 0  ;
+  serviceFee = 0;
 
   @ApiProperty()
-  delegationCap: string = '';
+  delegationCap = '';
 
   @ApiProperty()
-  apr: number = 0;
+  apr = 0;
 
   @ApiProperty()
-  numUsers: number = 0;
+  numUsers = 0;
 
   @ApiProperty()
-  numNodes: number = 0;
+  numNodes = 0;
 
   @ApiProperty()
   cumulatedRewards: string | null = null;
@@ -32,11 +32,11 @@ export class Provider {
   identity: string | undefined = undefined;
 
   @ApiProperty()
-  stake: string = '';
+  stake = '';
 
   @ApiProperty()
-  topUp: string = '';
+  topUp = '';
 
   @ApiProperty()
-  locked: string = '';
+  locked = '';
 }

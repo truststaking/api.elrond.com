@@ -1,4 +1,4 @@
-import { QueryOperator } from "./query.operator";
+import { QueryOperator } from './query.operator';
 
 export abstract class AbstractQuery {
   private query: any;
@@ -6,12 +6,16 @@ export abstract class AbstractQuery {
   constructor(
     key: string,
     value: any | undefined,
-    operator: QueryOperator | undefined
+    operator: QueryOperator | undefined,
   ) {
     this.query = this.buildQuery(key, value, operator);
   }
 
-  abstract buildQuery(key: string, value: any | undefined, operator: QueryOperator | undefined): any;
+  abstract buildQuery(
+    key: string,
+    value: any | undefined,
+    operator: QueryOperator | undefined,
+  ): any;
 
   getQuery(): any {
     return this.query;
