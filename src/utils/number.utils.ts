@@ -11,26 +11,8 @@ export class NumberUtils {
   static denominate(value: BigInt): number {
     return Number(value.valueOf() / BigInt(Math.pow(10, 18)));
   }
-  static denominateFloat({
-    input = '',
-    denomination = 18,
-    decimals = 6,
-    showLastNonZeroDecimal = false,
-    addCommas = false,
-  }: Denomination): string {
-    if (input === '...') {
-      return input;
-    }
-    if (input === '' || input === '0' || input === undefined) {
-      input = '0';
-    }
-    return format(
-      input,
-      denomination,
-      decimals,
-      showLastNonZeroDecimal,
-      addCommas,
-    );
+  static denominateFloat(input: Denomination): string {
+    return format(input);
   }
   static denominateString(value: string): number {
     return NumberUtils.denominate(BigInt(value));
@@ -41,18 +23,24 @@ export class NumberUtils {
     return BigNumber(hex, 16).toString(10);
   }
 }
-function format(
-  big: { toString: () => string },
-  denomination: number,
-  decimals: number,
-  showLastNonZeroDecimal: boolean,
-  addCommas: boolean,
-) {
+function format({
+  input,
+  denomination = 18,
+  decimals = 6,
+  showLastNonZeroDecimal = false,
+  addCommas = false,
+}: Denomination) {
+  if (input === '...') {
+    return input;
+  }
+  if (input === '' || input === '0' || input === undefined) {
+    input = '0';
+  }
   showLastNonZeroDecimal =
     typeof showLastNonZeroDecimal !== 'undefined'
       ? showLastNonZeroDecimal
       : false;
-  let array = big.toString().split('');
+  let array = input.split('');
   if (denomination !== 0) {
     // make sure we have enough characters
     while (array.length < denomination + 1) {
