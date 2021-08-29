@@ -1,6 +1,7 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DelegationLegacyService } from './delegation.legacy.service';
+import { AccountDelegationLegacy } from './entities/account.delegation.legacy';
 import { DelegationLegacy } from './entities/delegation.legacy';
 
 @Controller()
@@ -18,5 +19,16 @@ export class DelegationLegacyController {
   })
   async getBlock(): Promise<DelegationLegacy> {
     return await this.delegationLegacyService.getDelegation();
+  }
+  @Get('/delegation-legacy/:address')
+  @ApiResponse({
+    status: 200,
+    description: 'The delegation legacy details for an address',
+    type: AccountDelegationLegacy,
+  })
+  async getLegacy(
+    @Param('address') address: string,
+  ): Promise<AccountDelegationLegacy> {
+    return await this.delegationLegacyService.getDelegationForAddress(address);
   }
 }

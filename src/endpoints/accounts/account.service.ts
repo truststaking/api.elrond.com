@@ -17,6 +17,12 @@ import { Constants } from 'src/utils/constants';
 import { AddressUtils } from 'src/utils/address.utils';
 import { ApiUtils } from 'src/utils/api.utils';
 import { BinaryUtils } from 'src/utils/binary.utils';
+import { TransactionService } from '../transactions/transaction.service';
+import { TransactionFilter } from '../transactions/entities/transaction.filter';
+import { TransactionStatus } from '../transactions/entities/transaction.status';
+import { TransactionDetailed } from '../transactions/entities/transaction.detailed';
+import { NumberUtils } from 'src/utils/number.utils';
+import BigNumber from 'bignumber.js';
 
 @Injectable()
 export class AccountService {
@@ -29,10 +35,94 @@ export class AccountService {
     private readonly cachingService: CachingService,
     private readonly vmQueryService: VmQueryService,
     private readonly apiConfigService: ApiConfigService,
+    private readonly transactionService: TransactionService,
   ) {
     this.logger = new Logger(AccountService.name);
   }
 
+  async getHistory(filter: TransactionFilter): Promise<TransactionDetailed[]> {
+    const getSendTransactions = await this.transactionService.getTransactions({
+      ...filter,
+      size: 10000,
+      from: 0,
+      status: TransactionStatus.success,
+      receiver: undefined,
+    });
+    const getReceiveTransactions =
+      await this.transactionService.getTransactions({
+        ...filter,
+        size: 10000,
+        from: 0,
+        status: TransactionStatus.success,
+        sender: undefined,
+      });
+    const transactions: TransactionDetailed[] = [
+      ...getSendTransactions,
+      ...getReceiveTransactions,
+    ];
+    transactions.sort(function (
+      a: { timestamp: number },
+      b: { timestamp: number },
+    ) {
+      return a.timestamp - b.timestamp;
+    });
+    return transactions.map((tx) => {
+      tx.value = NumberUtils.denominateString(tx.value).toString();
+      if (tx.scResults !== null) {
+        for (let index = 0; index < tx.scResults.length; index++) {
+          const scResult = tx.scResults[index];
+          tx.scResults[index].value = NumberUtils.denominateString(
+            tx.scResults[index].value,
+          ).toString();
+          if (scResult.data) {
+            tx.scResults[index].data = Buffer.from(
+              tx.scResults[index].data,
+              'base64',
+            ).toString();
+            const data_list = tx.scResults[index].data.split('@');
+            const data_list_hex: string[] = [];
+            if (data_list.length > 1) {
+              data_list.forEach((info, index) => {
+                if (
+                  index == 2 &&
+                  (Buffer.from(tx.data, 'base64')
+                    .toString()
+                    .split('@')[0]
+                    .localeCompare('createNewDelegationContract') == 0 ||
+                    Buffer.from(tx.data, 'base64')
+                      .toString()
+                      .split('@')[0]
+                      .localeCompare('makeNewContractFromValidatorData') ==
+                      0) &&
+                  info.includes('000000')
+                ) {
+                  data_list_hex.push(AddressUtils.bech32Encode(info));
+                } else {
+                  data_list_hex.push(Buffer.from(info, 'hex').toString());
+                }
+              });
+            }
+            tx.scResults[index].data = data_list_hex.join('@');
+          }
+        }
+      }
+      if (tx.data !== null) {
+        tx.data = Buffer.from(tx.data, 'base64').toString();
+        const values = tx.data.split('@');
+        if (
+          values[0] == 'unDelegate' ||
+          (values[0] == 'unStake' &&
+            tx.receiver ===
+              'erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt')
+        ) {
+          values[1] = new BigNumber(values[1], 16).toString(10);
+          values[1] = NumberUtils.denominateString(values[1]).toString();
+          tx.data = values.join('@');
+        }
+      }
+      return tx;
+    });
+  }
   async getAccountsCount(): Promise<number> {
     return await this.cachingService.getOrSetCache(
       'account:count',

@@ -34,11 +34,12 @@ export class DelegationService {
       node.provider ? node.provider : node.owner,
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     providerAddresses = [...new Set(providerAddresses)];
 
-    // @ts-ignore
     const minDelegationHex = Buffer.from(
-      configsBase64.pop(),
+      // eslint-disable-next-line
+      configsBase64.pop() as string,
       'base64',
     ).toString('hex');
     const minDelegation = BigInt(

@@ -54,7 +54,7 @@ import { WaitingListService } from './endpoints/waiting-list/waiting.list.servic
 import { BlsService } from './common/bls.service';
 import { TagController } from './endpoints/nfttags/tag.controller';
 import { TagService } from './endpoints/nfttags/tag.service';
-const DailyRotateFile = require('winston-daily-rotate-file');
+import DailyRotateFile from 'winston-daily-rotate-file';
 
 @Module({
   imports: [

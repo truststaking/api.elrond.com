@@ -17,7 +17,6 @@ import { BinaryUtils } from 'src/utils/binary.utils';
 import { Constants } from 'src/utils/constants';
 import { ElasticService } from '../../common/elastic.service';
 import { SmartContractResult } from './entities/smart.contract.result';
-import { Transaction } from './entities/transaction';
 import { TransactionCreate } from './entities/transaction.create';
 import { TransactionDetailed } from './entities/transaction.detailed';
 import { TransactionFilter } from './entities/transaction.filter';
@@ -96,7 +95,9 @@ export class TransactionService {
     );
   }
 
-  async getTransactions(filter: TransactionFilter): Promise<Transaction[]> {
+  async getTransactions(
+    filter: TransactionFilter,
+  ): Promise<TransactionDetailed[]> {
     const elasticQueryAdapter: ElasticQuery = new ElasticQuery();
 
     const { from, size } = filter;
@@ -135,7 +136,7 @@ export class TransactionService {
     );
 
     return transactions.map((transaction) =>
-      ApiUtils.mergeObjects(new Transaction(), transaction),
+      ApiUtils.mergeObjects(new TransactionDetailed(), transaction),
     );
   }
 

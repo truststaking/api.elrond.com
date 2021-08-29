@@ -25,12 +25,16 @@ import { DelegationLegacyService } from '../delegation.legacy/delegation.legacy.
 import { AccountDelegationLegacy } from '../delegation.legacy/entities/account.delegation.legacy';
 import { AccountKey } from './entities/account.key';
 import { NftAccount } from '../tokens/entities/nft.account';
+import { QueryConditionOptions } from 'src/common/entities/elastic/query.condition.options';
 import { ParseOptionalEnumPipe } from 'src/utils/pipes/parse.optional.enum.pipe';
+import { ParseOptionalIntPipe } from 'src/utils/pipes/parse.optional.int.pipe';
 import { NftType } from '../tokens/entities/nft.type';
 import { ParseOptionalBoolPipe } from 'src/utils/pipes/parse.optional.bool.pipe';
 import { WaitingList } from '../waiting-list/entities/waiting.list';
 import { WaitingListService } from '../waiting-list/waiting.list.service';
 import { NftCollection } from '../tokens/entities/nft.collection';
+import { Transaction } from '../transactions/entities/transaction';
+import { TransactionStatus } from '../transactions/entities/transaction.status';
 
 @Controller()
 @ApiTags('accounts')
@@ -506,7 +510,7 @@ export class AccountController {
     status: 404,
     description: 'Account not found',
   })
-  async getAccountStake(@Param('address') address: string) {
+  async getAccountStake(@Param('address') address: string): Promise<unknown> {
     try {
       return await this.tokenService.getStakeForAddress(address);
     } catch (error) {
@@ -571,5 +575,95 @@ export class AccountController {
     @Param('address') address: string,
   ): Promise<WaitingList[]> {
     return await this.waitingListService.getWaitingListForAddress(address);
+  }
+
+  @Get('/accounts/:address/history')
+  @ApiResponse({
+    status: 200,
+    description: 'List transactions',
+    type: Transaction,
+    isArray: true,
+  })
+  @ApiQuery({
+    name: 'address',
+    description: 'Address of the wallet',
+    required: true,
+  })
+  @ApiQuery({
+    name: 'senderShard',
+    description: 'Id of the shard the sender address belongs to',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'receiverShard',
+    description: 'Id of the shard the receiver address belongs to',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'miniBlockHash',
+    description: 'Filter by miniblock hash',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'status',
+    description: 'Status of the transaction (success / pending / invalid)',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'search',
+    description: 'Search in data object',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'condition',
+    description: 'Condition type (should/must)',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'before',
+    description: 'Before timestamp',
+    required: false,
+  })
+  @ApiQuery({ name: 'after', description: 'After timestamp', required: false })
+  @ApiQuery({
+    name: 'from',
+    description: 'Numer of items to skip for the result set',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'size',
+    description: 'Number of items to retrieve',
+    required: false,
+  })
+  async getTransactions(
+    @Param('address') address: string,
+    @Query('senderShard', ParseOptionalIntPipe) senderShard: number | undefined,
+    @Query('receiverShard', ParseOptionalIntPipe)
+    receiverShard: number | undefined,
+    @Query('miniBlockHash') miniBlockHash: string | undefined,
+    @Query('status', new ParseOptionalEnumPipe(TransactionStatus))
+    status: TransactionStatus | undefined,
+    @Query('search') search: string | undefined,
+    @Query('condition', new ParseOptionalEnumPipe(QueryConditionOptions))
+    condition: QueryConditionOptions | undefined,
+    @Query('before', ParseOptionalIntPipe) before: number | undefined,
+    @Query('after', ParseOptionalIntPipe) after: number | undefined,
+    @Query('from', new DefaultValuePipe(0), ParseIntPipe) from: number,
+    @Query('size', new DefaultValuePipe(25), ParseIntPipe) size: number,
+  ): Promise<Transaction[]> {
+    return this.accountService.getHistory({
+      sender: address,
+      receiver: address,
+      senderShard,
+      receiverShard,
+      miniBlockHash,
+      status,
+      search,
+      condition,
+      before,
+      after,
+      from,
+      size,
+    });
   }
 }
