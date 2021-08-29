@@ -67,13 +67,14 @@ export class AccountService {
       return a.timestamp - b.timestamp;
     });
     return transactions.map((tx) => {
-      tx.value = NumberUtils.denominateString(tx.value).toString();
+      tx.value = NumberUtils.denominateFloat({ input: tx.value }).toString();
+      tx.fee = NumberUtils.denominateFloat({ input: tx.fee }).toString();
       if (tx.scResults !== null) {
         for (let index = 0; index < tx.scResults.length; index++) {
           const scResult = tx.scResults[index];
-          tx.scResults[index].value = NumberUtils.denominateString(
-            tx.scResults[index].value,
-          ).toString();
+          tx.scResults[index].value = NumberUtils.denominateFloat({
+            input: tx.scResults[index].value,
+          }).toString();
           if (scResult.data) {
             tx.scResults[index].data = Buffer.from(
               tx.scResults[index].data,
@@ -116,7 +117,9 @@ export class AccountService {
               'erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt')
         ) {
           values[1] = new BigNumber(values[1], 16).toString(10);
-          values[1] = NumberUtils.denominateString(values[1]).toString();
+          values[1] = NumberUtils.denominateFloat({
+            input: values[1],
+          }).toString();
           tx.data = values.join('@');
         }
       }

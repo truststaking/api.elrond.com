@@ -1,10 +1,37 @@
 const BigNumber = require('bignumber.js');
+interface Denomination {
+  input: string;
+  denomination?: number;
+  decimals?: number;
+  showLastNonZeroDecimal?: boolean;
+  addCommas?: boolean;
+}
 
 export class NumberUtils {
   static denominate(value: BigInt): number {
     return Number(value.valueOf() / BigInt(Math.pow(10, 18)));
   }
-
+  static denominateFloat({
+    input = '',
+    denomination = 18,
+    decimals = 6,
+    showLastNonZeroDecimal = false,
+    addCommas = false,
+  }: Denomination): string {
+    if (input === '...') {
+      return input;
+    }
+    if (input === '' || input === '0' || input === undefined) {
+      input = '0';
+    }
+    return format(
+      input,
+      denomination,
+      decimals,
+      showLastNonZeroDecimal,
+      addCommas,
+    );
+  }
   static denominateString(value: string): number {
     return NumberUtils.denominate(BigInt(value));
   }
@@ -82,25 +109,3 @@ function format(
 
   return decimals === 0 ? string.split('.').join('') : string;
 }
-
-const denominate = ({
-  input,
-  denomination = 18,
-  decimals = 6,
-  showLastNonZeroDecimal = false,
-  addCommas = false,
-}) => {
-  if (input === '...') {
-    return input;
-  }
-  if (input === '' || input === '0' || input === undefined) {
-    input = '0';
-  }
-  return format(
-    input,
-    denomination,
-    decimals,
-    showLastNonZeroDecimal,
-    addCommas,
-  );
-};
