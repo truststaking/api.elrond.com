@@ -1,9 +1,10 @@
 import { ApiUtils } from 'src/utils/api.utils';
+import { NumberUtils } from 'src/utils/number.utils';
 
 describe('API helpers', () => {
   describe('Cleanup API response helper', () => {
     it('should remove key b (value is null)', () => {
-      const testObject: any = {
+      const testObject = {
         a: 'a',
         b: null,
       };
@@ -14,7 +15,7 @@ describe('API helpers', () => {
     });
 
     it('should remove key b (value is "")', () => {
-      const testObject: any = {
+      const testObject = {
         a: 'a',
         b: '',
       };
@@ -25,7 +26,7 @@ describe('API helpers', () => {
     });
 
     it('should remove key c and d (empty values)', () => {
-      const testObject: any = {
+      const testObject = {
         a: 'a',
         b: 'b',
         c: null,
@@ -49,7 +50,7 @@ describe('API helpers', () => {
     });
 
     it('should remove empty keys for nested objects', () => {
-      const testObject: any = {
+      const testObject = {
         a: {
           b: '',
           c: {
@@ -66,7 +67,7 @@ describe('API helpers', () => {
     });
 
     it('should remove array values within object', () => {
-      const testObject: any = {
+      const testObject = {
         a: [
           { b: 'b', c: null },
           { d: 'd', e: '' },
@@ -79,7 +80,7 @@ describe('API helpers', () => {
     });
 
     it('should remove empty array values within object', () => {
-      const testObject: any = {
+      const testObject = {
         a: [
           { b: 'b', c: [] },
           { d: 'd', e: [] },
@@ -92,13 +93,20 @@ describe('API helpers', () => {
     });
 
     it('should return same object', () => {
-      const testObject: any = {
+      const testObject = {
         a: 'a',
       };
 
       ApiUtils.cleanupApiValueRecursively(testObject);
 
       expect(testObject).toMatchObject(testObject);
+    });
+
+    it('should return a denomination value', () => {
+      console.log(NumberUtils.denominateFloat('50000000100000000000'));
+      expect(NumberUtils.denominateFloat('50000000100000000000')).toEqual(
+        '50.000000100000000000',
+      );
     });
   });
 });

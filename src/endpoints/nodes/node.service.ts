@@ -94,9 +94,9 @@ export class NodeService {
 
     const filteredNodes = allNodes.filter((node) => {
       if (query.search !== undefined) {
-        const nodeMatches = node.bls
-          .toLowerCase()
-          .includes(query.search.toLowerCase());
+        const nodeMatches =
+          node.bls &&
+          node.bls.toLowerCase().includes(query.search.toLowerCase());
         const nameMatches =
           node.name &&
           node.name.toLowerCase().includes(query.search.toLowerCase());
@@ -218,11 +218,13 @@ export class NodeService {
     const keybases: { [key: string]: KeybaseState } | undefined =
       await this.keybaseService.getCachedNodeKeybases();
 
-    for (const node of nodes) {
-      node.identity = undefined;
+    if (keybases) {
+      for (let node of nodes) {
+        node.identity = undefined;
 
-      if (keybases && keybases[node.bls] && keybases[node.bls].confirmed) {
-        node.identity = keybases[node.bls].identity;
+        if (keybases[node.bls] && keybases[node.bls].confirmed) {
+          node.identity = keybases[node.bls].identity;
+        }
       }
     }
 
@@ -250,10 +252,6 @@ export class NodeService {
         if (provider) {
           node.provider = provider.provider;
           node.owner = provider.owner ?? '';
-
-          if (provider.identity) {
-            node.identity = provider.identity;
-          }
         }
       }
     });

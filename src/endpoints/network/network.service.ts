@@ -16,6 +16,7 @@ import { TransactionService } from '../transactions/transaction.service';
 import { VmQueryService } from '../vm.query/vm.query.service';
 import { NetworkConstants } from './entities/constants';
 import { Economics } from './entities/economics';
+import { NetworkConfig } from './entities/networkConfig';
 import { StakeService } from '../stake/stake.service';
 
 @Injectable()
@@ -61,7 +62,7 @@ export class NetworkService {
     };
   }
 
-  async getNetworkConfig() {
+  async getNetworkConfig(): Promise<NetworkConfig> {
     const [
       {
         config: { erd_round_duration, erd_rounds_per_epoch },
@@ -185,7 +186,7 @@ export class NetworkService {
     };
   }
 
-  async getValidatorStatistics() {
+  async getValidatorStatistics(): Promise<any> {
     return await this.gatewayService.get('validator/statistics');
   }
 
@@ -256,7 +257,7 @@ export class NetworkService {
     return { apr, topUpApr, baseApr };
   }
 
-  numberDecode(encoded: string) {
+  numberDecode(encoded: string): string {
     const hex = Buffer.from(encoded, 'base64').toString('hex');
     return BigInt(hex ? '0x' + hex : hex).toString();
   }

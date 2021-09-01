@@ -236,4 +236,22 @@ export class ApiConfigService {
 
     return mediaUrl;
   }
+
+  getSecurityAdmins(): string[] {
+    const admins = this.configService.get<string[]>('security.admins');
+    if (admins === undefined) {
+      throw new Error('No security admins value present');
+    }
+
+    return admins;
+  }
+
+  getJwtSecret(): string {
+    const jwtSecret = this.configService.get<string>('security.jwtSecret');
+    if (!jwtSecret) {
+      throw new Error('No jwtSecret present');
+    }
+
+    return jwtSecret;
+  }
 }

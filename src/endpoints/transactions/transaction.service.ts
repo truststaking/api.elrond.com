@@ -27,12 +27,17 @@ import {
   TransactionLabeled,
 } from './entities/transaction.labels';
 import { TransactionLog } from './entities/transaction.log';
+import { TransactionLogEvent } from './entities/transaction.log.event';
+import { TransactionLogEventIdentifier } from './entities/transaction.log.event.identifier';
+import { TransactionOperation } from './entities/transaction.operation';
 import { TransactionReceipt } from './entities/transaction.receipt';
 import { TransactionSendResult } from './entities/transaction.send.result';
 import {
   TransactionType,
   TransactionPoint,
 } from './entities/transaction.status';
+import { TransactionOperationType } from './entities/transaction.operation.type';
+import { TransactionOperationAction } from './entities/transaction.operation.action';
 
 @Injectable()
 export class TransactionService {
@@ -147,8 +152,14 @@ export class TransactionService {
 
     return transactions.map((tx) => {
       tx = ApiUtils.mergeObjects(new TransactionHistory(), tx);
-      tx.value = NumberUtils.denominateFloat({ input: tx.value }).toString();
-      tx.fee = NumberUtils.denominateFloat({ input: tx.fee }).toString();
+      tx.value = NumberUtils.denominateFloat(tx.value);
+      if (!tx.fee.includes('-')) {
+        tx.fee = NumberUtils.denominateFloat(tx.fee);
+      } else {
+        tx.fee = `${'-'}${NumberUtils.denominateFloat(
+          Math.abs(parseFloat(tx.fee)).toString(),
+        )}`;
+      }
       if (tx.data !== null) {
         tx.data = Buffer.from(tx.data, 'base64').toString();
         if (tx.data.includes('@')) {
@@ -161,9 +172,7 @@ export class TransactionService {
                 'erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt')
           ) {
             values[1] = new BigNumber(values[1], 16).toString(10);
-            values[1] = NumberUtils.denominateFloat({
-              input: values[1],
-            }).toString();
+            values[1] = NumberUtils.denominateFloat(values[1]);
             tx.value = values[1];
             tx.data = values.join('@');
           }
@@ -172,9 +181,15 @@ export class TransactionService {
       if (tx.scResults !== null) {
         for (let index = 0; index < tx.scResults.length; index++) {
           const scResult = tx.scResults[index];
-          tx.scResults[index].value = NumberUtils.denominateFloat({
-            input: tx.scResults[index].value,
-          }).toString();
+          if (tx.scResults[index].value.includes('-')) {
+            tx.scResults[index].value = `${'-'}${NumberUtils.denominateFloat(
+              Math.abs(parseFloat(tx.scResults[index].value)).toString(),
+            )}`;
+          } else {
+            tx.scResults[index].value = NumberUtils.denominateFloat(
+              tx.scResults[index].value,
+            );
+          }
           if (scResult.data && scResult.data !== '') {
             tx.scResults[index].data = Buffer.from(
               tx.scResults[index].data,
@@ -320,6 +335,27 @@ export class TransactionService {
     );
   }
 
+  private async tryGetTransactionFromElasticBySenderAndNonce(
+    sender: string,
+    nonce: number,
+  ): Promise<TransactionDetailed | undefined> {
+    const query: ElasticQuery = new ElasticQuery();
+    query.pagination = { from: 0, size: 1 };
+
+    query.condition.must = [
+      QueryType.Match('sender', sender),
+      QueryType.Match('nonce', nonce),
+    ];
+
+    const transactions = await this.elasticService.getList(
+      'transactions',
+      'txHash',
+      query,
+    );
+
+    return transactions.firstOrUndefined();
+  }
+
   async tryGetTransactionFromElastic(
     txHash: string,
   ): Promise<TransactionDetailed | null> {
@@ -401,6 +437,14 @@ export class TransactionService {
           await this.elasticService.getLogsForTransactionHashes(
             elasticQueryAdapterLogs,
           );
+        const transactionLogs = logs.map((log) =>
+          ApiUtils.mergeObjects(new TransactionLog(), log._source),
+        );
+
+        transactionDetailed.operations = this.getOperationsForTransactionLogs(
+          txHash,
+          transactionLogs,
+        );
 
         for (const log of logs) {
           if (log._id === txHash) {
@@ -432,6 +476,166 @@ export class TransactionService {
     }
   }
 
+  getOperationsForTransactionLogs(
+    txHash: string,
+    logs: TransactionLog[],
+  ): TransactionOperation[] {
+    const operations: (TransactionOperation | undefined)[] = [];
+
+    for (const log of logs) {
+      for (const event of log.events) {
+        switch (event.identifier) {
+          case TransactionLogEventIdentifier.ESDTNFTTransfer:
+            operations.push(
+              this.getTransactionNftOperation(
+                txHash,
+                log,
+                event,
+                TransactionOperationAction.transfer,
+              ),
+            );
+            break;
+          case TransactionLogEventIdentifier.ESDTNFTBurn:
+            operations.push(
+              this.getTransactionNftOperation(
+                txHash,
+                log,
+                event,
+                TransactionOperationAction.burn,
+              ),
+            );
+            break;
+          case TransactionLogEventIdentifier.ESDTNFTAddQuantity:
+            operations.push(
+              this.getTransactionNftOperation(
+                txHash,
+                log,
+                event,
+                TransactionOperationAction.addQuantity,
+              ),
+            );
+            break;
+          case TransactionLogEventIdentifier.ESDTNFTCreate:
+            operations.push(
+              this.getTransactionNftOperation(
+                txHash,
+                log,
+                event,
+                TransactionOperationAction.create,
+              ),
+            );
+            break;
+          case TransactionLogEventIdentifier.MultiESDTNFTTransfer:
+            operations.push(
+              this.getTransactionNftOperation(
+                txHash,
+                log,
+                event,
+                TransactionOperationAction.multiTransfer,
+              ),
+            );
+            break;
+          case TransactionLogEventIdentifier.ESDTTransfer:
+            operations.push(
+              this.getTransactionNftOperation(
+                txHash,
+                log,
+                event,
+                TransactionOperationAction.transfer,
+              ),
+            );
+            break;
+          case TransactionLogEventIdentifier.ESDTBurn:
+            operations.push(
+              this.getTransactionNftOperation(
+                txHash,
+                log,
+                event,
+                TransactionOperationAction.burn,
+              ),
+            );
+            break;
+          case TransactionLogEventIdentifier.ESDTLocalMint:
+            operations.push(
+              this.getTransactionNftOperation(
+                txHash,
+                log,
+                event,
+                TransactionOperationAction.localMint,
+              ),
+            );
+            break;
+          case TransactionLogEventIdentifier.ESDTLocalBurn:
+            operations.push(
+              this.getTransactionNftOperation(
+                txHash,
+                log,
+                event,
+                TransactionOperationAction.localBurn,
+              ),
+            );
+            break;
+          case TransactionLogEventIdentifier.ESDTWipe:
+            operations.push(
+              this.getTransactionNftOperation(
+                txHash,
+                log,
+                event,
+                TransactionOperationAction.wipe,
+              ),
+            );
+            break;
+        }
+      }
+    }
+
+    return operations
+      .filter((operation) => operation !== undefined)
+      .map((operation) => operation!);
+  }
+
+  private getTransactionNftOperation(
+    txHash: string,
+    log: TransactionLog,
+    event: TransactionLogEvent,
+    action: TransactionOperationAction,
+  ): TransactionOperation | undefined {
+    try {
+      let identifier = BinaryUtils.base64Decode(event.topics[0]);
+      const nonce = BinaryUtils.tryBase64ToHex(event.topics[1]);
+      const value =
+        BinaryUtils.tryBase64ToBigInt(event.topics[2])?.toString() ?? '0';
+      const receiver =
+        BinaryUtils.tryBase64ToAddress(event.topics[3]) ?? log.address;
+
+      let collection: string | undefined = undefined;
+      if (nonce) {
+        collection = identifier;
+        identifier = `${collection}-${nonce}`;
+      }
+
+      const type = nonce
+        ? TransactionOperationType.nft
+        : TransactionOperationType.esdt;
+
+      return {
+        action,
+        type,
+        collection,
+        identifier,
+        sender: log.address,
+        receiver,
+        value,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error when parsing NFT transaction log for tx hash '${txHash}' with action '${action}' and topics: ${event.topics}`,
+      );
+      this.logger.error(error);
+      return undefined;
+    }
+  }
+
   async tryGetTransactionFromGateway(
     txHash: string,
   ): Promise<TransactionDetailed | null> {
@@ -439,6 +643,17 @@ export class TransactionService {
       const { transaction } = await this.gatewayService.get(
         `transaction/${txHash}?withResults=true`,
       );
+
+      if (transaction.status === 'pending') {
+        const existingTransaction =
+          await this.tryGetTransactionFromElasticBySenderAndNonce(
+            transaction.sender,
+            transaction.nonce,
+          );
+        if (existingTransaction && existingTransaction.txHash !== txHash) {
+          return null;
+        }
+      }
 
       if (transaction.receipt) {
         transaction.receipt.value = transaction.receipt.value.toString();
