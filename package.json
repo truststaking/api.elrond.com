@@ -28,6 +28,7 @@
     "copy-custom-config": "cp ./config/config.custom.yaml ./config/config.yaml"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.28.0",
     "@elrondnetwork/erdjs": "^6.6.2",
     "@nestjs/common": "^8.0.6",
     "@nestjs/config": "^1.0.1",

@@ -26,6 +26,7 @@
     "noImplicitAny": true,
     "noImplicitThis": true,
     "noUnusedLocals": true,
+    "resolveJsonModule": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import BigNumber from 'bignumber.js';
 import { ApiConfigService } from 'src/common/api.config.service';
 import { CachingService } from 'src/common/caching.service';
 import { DataApiService } from 'src/common/data.api.service';
@@ -15,14 +16,23 @@ import { AddressUtils } from 'src/utils/address.utils';
 import { ApiUtils } from 'src/utils/api.utils';
 import { BinaryUtils } from 'src/utils/binary.utils';
 import { Constants } from 'src/utils/constants';
+import { NumberUtils } from 'src/utils/number.utils';
 import { ElasticService } from '../../common/elastic.service';
 import { SmartContractResult } from './entities/smart.contract.result';
 import { TransactionCreate } from './entities/transaction.create';
 import { TransactionDetailed } from './entities/transaction.detailed';
 import { TransactionFilter } from './entities/transaction.filter';
+import {
+  TransactionHistory,
+  TransactionLabeled,
+} from './entities/transaction.labels';
 import { TransactionLog } from './entities/transaction.log';
 import { TransactionReceipt } from './entities/transaction.receipt';
 import { TransactionSendResult } from './entities/transaction.send.result';
+import {
+  TransactionType,
+  TransactionPoint,
+} from './entities/transaction.status';
 
 @Injectable()
 export class TransactionService {
@@ -97,7 +107,7 @@ export class TransactionService {
 
   async getTransactions(
     filter: TransactionFilter,
-  ): Promise<TransactionDetailed[]> {
+  ): Promise<TransactionLabeled[]> {
     const elasticQueryAdapter: ElasticQuery = new ElasticQuery();
 
     const { from, size } = filter;
@@ -135,9 +145,106 @@ export class TransactionService {
       elasticQueryAdapter,
     );
 
-    return transactions.map((transaction) =>
-      ApiUtils.mergeObjects(new TransactionDetailed(), transaction),
-    );
+    return transactions.map((tx) => {
+      tx = ApiUtils.mergeObjects(new TransactionHistory(), tx);
+      tx.value = NumberUtils.denominateFloat({ input: tx.value }).toString();
+      tx.fee = NumberUtils.denominateFloat({ input: tx.fee }).toString();
+      if (tx.data !== null) {
+        tx.data = Buffer.from(tx.data, 'base64').toString();
+        if (tx.data.includes('@')) {
+          const values = tx.data.split('@');
+          tx.method = values[0];
+          if (
+            values[0] == 'unDelegate' ||
+            (values[0] == 'unStake' &&
+              tx.receiver ===
+                'erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt')
+          ) {
+            values[1] = new BigNumber(values[1], 16).toString(10);
+            values[1] = NumberUtils.denominateFloat({
+              input: values[1],
+            }).toString();
+            tx.value = values[1];
+            tx.data = values.join('@');
+          }
+        }
+      }
+      if (tx.scResults !== null) {
+        for (let index = 0; index < tx.scResults.length; index++) {
+          const scResult = tx.scResults[index];
+          tx.scResults[index].value = NumberUtils.denominateFloat({
+            input: tx.scResults[index].value,
+          }).toString();
+          if (scResult.data && scResult.data !== '') {
+            tx.scResults[index].data = Buffer.from(
+              tx.scResults[index].data,
+              'base64',
+            ).toString();
+            const data_list = tx.scResults[index].data.split('@');
+            const data_list_hex: string[] = [];
+            if (data_list.length > 1) {
+              data_list.forEach((info: any) => {
+                const command = tx.data.toString().split('@');
+                if (
+                  (command[0].localeCompare('createNewDelegationContract') ==
+                    0 ||
+                    command[0].localeCompare(
+                      'makeNewContractFromValidatorData',
+                    ) == 0) &&
+                  info.includes('000000')
+                ) {
+                  data_list_hex.push(AddressUtils.bech32Encode(info));
+                  console.log(info);
+                } else {
+                  const val = Buffer.from(info, 'hex').toString();
+                  data_list_hex.push(val);
+                }
+              });
+            } else {
+              if (scResult.data.includes('unbond')) {
+                tx.value = scResult.value;
+              }
+            }
+            tx.scResults[index].data = data_list_hex.join('@');
+          } else {
+            if (
+              tx.data === 'withdraw' ||
+              tx.data === 'reDelegateRewards' ||
+              tx.data === 'claimRewards'
+            ) {
+              if (parseFloat(scResult.value) > 0) {
+                tx.value = scResult.value;
+              }
+            }
+          }
+        }
+      }
+      if (AddressUtils.isSmartContractAddress(tx.receiver)) {
+        tx.type = TransactionType.functionCall;
+        tx.points = TransactionPoint.scCall;
+        if (
+          tx.receiver ===
+          'erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu'
+        ) {
+          tx.points = TransactionPoint.contractDeployment;
+        }
+        if (!tx.data.includes('@')) {
+          tx.method = tx.data;
+        }
+      } else {
+        if (tx.sender === tx.receiver) {
+          tx.type = TransactionType.self;
+          tx.points = TransactionPoint.receiver;
+        } else if (tx.sender === filter.sender && tx.sender !== tx.receiver) {
+          tx.type = TransactionType.transfer;
+          tx.points = TransactionPoint.transfer;
+        } else {
+          tx.type = TransactionType.receiver;
+          tx.points = TransactionPoint.receiver;
+        }
+      }
+      return tx;
+    });
   }
 
   async getTransaction(txHash: string): Promise<TransactionDetailed | null> {
@@ -154,14 +261,13 @@ export class TransactionService {
     return transaction;
   }
 
-  private async getTransactionPrice(
+  public async getTransactionPrice(
     transaction: TransactionDetailed,
   ): Promise<number | undefined> {
     const dataUrl = this.apiConfigService.getDataUrl();
     if (!dataUrl) {
       return undefined;
     }
-
     if (transaction === null) {
       return undefined;
     }

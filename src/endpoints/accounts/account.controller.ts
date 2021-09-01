@@ -15,7 +15,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AccountService } from './account.service';
+import { AccountService, History } from './account.service';
 import { AccountDetailed } from './entities/account.detailed';
 import { Account } from './entities/account';
 import { AccountDeferred } from './entities/account.deferred';
@@ -577,7 +577,7 @@ export class AccountController {
     return await this.waitingListService.getWaitingListForAddress(address);
   }
 
-  @Get('/accounts/:address/history')
+  @Get('/accounts/:address/txHistory')
   @ApiResponse({
     status: 200,
     description: 'List transactions',
@@ -650,8 +650,8 @@ export class AccountController {
     @Query('after', ParseOptionalIntPipe) after: number | undefined,
     @Query('from', new DefaultValuePipe(0), ParseIntPipe) from: number,
     @Query('size', new DefaultValuePipe(25), ParseIntPipe) size: number,
-  ): Promise<Transaction[]> {
-    return this.accountService.getHistory({
+  ): Promise<History> {
+    const transactions = await this.accountService.getAccountHistory({
       sender: address,
       receiver: address,
       senderShard,
@@ -665,5 +665,6 @@ export class AccountController {
       from,
       size,
     });
+    return await this.accountService.analyseTransactions(transactions, address);
   }
 }
