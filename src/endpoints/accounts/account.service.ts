@@ -80,8 +80,6 @@ export class History {
   @ApiProperty()
   available: any = new BigNumber(0);
   @ApiProperty()
-  totalAvailable: any = new BigNumber(0);
-  @ApiProperty()
   genesisNodes = 0;
   @ApiProperty()
   genesisAmount: any = new BigNumber(0);
@@ -172,11 +170,6 @@ export class AccountService {
           NumberUtils.denominateFloat(genesisData[address].balance),
         ),
       );
-      result.totalAvailable = result.totalAvailable.plus(
-        new BigNumber(
-          NumberUtils.denominateFloat(genesisData[address].balance),
-        ),
-      );
       result.genesisAmount = result.genesisAmount.plus(
         new BigNumber(
           NumberUtils.denominateFloat(genesisData[address].balance),
@@ -190,11 +183,6 @@ export class AccountService {
           NumberUtils.denominateFloat(genesisData[address].delegation.value),
         );
 
-        result.totalAvailable = result.totalAvailable.plus(
-          new BigNumber(
-            NumberUtils.denominateFloat(genesisData[address].delegation.value),
-          ),
-        );
         result.genesisAmount = result.genesisAmount.plus(
           new BigNumber(
             NumberUtils.denominateFloat(genesisData[address].delegation.value),
@@ -222,9 +210,6 @@ export class AccountService {
           }
 
           result.genesisAmount = result.genesisAmount.plus(new BigNumber(2500));
-          result.totalAvailable = result.totalAvailable.plus(
-            new BigNumber(2500),
-          );
         }
       }
     }
