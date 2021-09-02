@@ -215,7 +215,10 @@ export class TransactionService {
                 }
               });
             } else {
-              if (scResult.data.includes('unbond')) {
+              if (
+                scResult.data.includes('unbond') ||
+                scResult.data.includes('claim')
+              ) {
                 tx.value = scResult.value;
               }
             }
