@@ -209,7 +209,6 @@ export class TransactionService {
                   info.includes('000000')
                 ) {
                   data_list_hex.push(AddressUtils.bech32Encode(info));
-                  console.log(info);
                 } else {
                   const val = Buffer.from(info, 'hex').toString();
                   data_list_hex.push(val);
@@ -225,7 +224,8 @@ export class TransactionService {
             if (
               tx.data === 'withdraw' ||
               tx.data === 'reDelegateRewards' ||
-              tx.data === 'claimRewards'
+              tx.data === 'claimRewards' ||
+              tx.method === 'unBond'
             ) {
               if (parseFloat(scResult.value) > 0) {
                 tx.value = scResult.value;

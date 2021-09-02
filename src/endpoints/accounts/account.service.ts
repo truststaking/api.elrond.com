@@ -72,13 +72,15 @@ export class History {
   @ApiProperty()
   accountAge = 0;
   @ApiProperty()
-  fees = 0;
+  fees = new BigNumber(0);
   @ApiProperty({ type: ActionTypes })
   actionTypes: ActionTypes = new ActionTypes();
   @ApiProperty()
-  balanceHistory: Dictionary<number> = {};
+  balanceHistory: Dictionary<BigNumber> = {};
   @ApiProperty()
   available: any = new BigNumber(0);
+  @ApiProperty()
+  totalAvailable: any = new BigNumber(0);
   @ApiProperty()
   genesisNodes = 0;
   @ApiProperty()
@@ -166,23 +168,37 @@ export class AccountService {
     if (address in genesisData) {
       result.points += 50;
       result.available = result.available.plus(
-        new BigNumber(genesisData[address].balance),
+        new BigNumber(
+          NumberUtils.denominateFloat(genesisData[address].balance),
+        ),
+      );
+      result.totalAvailable = result.totalAvailable.plus(
+        new BigNumber(
+          NumberUtils.denominateFloat(genesisData[address].balance),
+        ),
       );
       result.genesisAmount = result.genesisAmount.plus(
-        new BigNumber(genesisData[address].balance),
+        new BigNumber(
+          NumberUtils.denominateFloat(genesisData[address].balance),
+        ),
       );
       if (
         genesisData[address]['delegation'].address ===
         'erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt'
       ) {
         result.staked[genesisData[address].delegation.address] = new BigNumber(
-          genesisData[address].delegation.value,
+          NumberUtils.denominateFloat(genesisData[address].delegation.value),
         );
-        result.available = result.available.plus(
-          new BigNumber(genesisData[address].delegation.value),
+
+        result.totalAvailable = result.totalAvailable.plus(
+          new BigNumber(
+            NumberUtils.denominateFloat(genesisData[address].delegation.value),
+          ),
         );
         result.genesisAmount = result.genesisAmount.plus(
-          new BigNumber(genesisData[address].delegation.value),
+          new BigNumber(
+            NumberUtils.denominateFloat(genesisData[address].delegation.value),
+          ),
         );
       }
       for (const value of nodeSetup['initialNodes']) {
@@ -206,54 +222,109 @@ export class AccountService {
           }
 
           result.genesisAmount = result.genesisAmount.plus(new BigNumber(2500));
-          result.available = result.available.plus(new BigNumber(2500));
+          result.totalAvailable = result.totalAvailable.plus(
+            new BigNumber(2500),
+          );
         }
       }
     }
+    result.genesisAmount = result.genesisAmount.toFixed();
 
-    result.genesisAmount = NumberUtils.denominateFloat({
-      input: result.genesisAmount.toFixed(),
-    });
-    result.balanceHistory[1] = parseFloat(result.genesisAmount);
+    result.balanceHistory[1] = new BigNumber(result.genesisAmount);
 
     const todayEpoch = getEpoch(Math.floor(Date.now() / 1000));
     for (const tx of txs) {
       const epoch = getEpoch(tx.timestamp);
-      let txFee = 0;
+      const bigTxValue = new BigNumber(tx.value);
+      let txFee = new BigNumber(0);
       // Calculate fees per wallet
-      if (parseFloat(tx.fee) > 0) {
-        result.fees += parseFloat(tx.fee);
-        txFee = parseFloat(tx.fee);
+      if (parseFloat(tx.fee) > 0 && tx.type !== TransactionType.receiver) {
+        txFee = new BigNumber(tx.fee);
+        result.fees = result.fees.plus(txFee);
+        result.available = result.available.minus(txFee);
       }
       // Calculate fees per wallet
 
       // Balance Hstory per epoch
       if (epoch in result.balanceHistory) {
+        if (tx.type !== TransactionType.receiver) {
+          result.balanceHistory[epoch] =
+            result.balanceHistory[epoch].minus(txFee);
+        }
         if (tx.type === TransactionType.receiver) {
-          result.balanceHistory[epoch] += parseFloat(tx.value);
+          result.balanceHistory[epoch] =
+            result.balanceHistory[epoch].plus(bigTxValue);
         } else if (tx.type === TransactionType.transfer) {
-          result.balanceHistory[epoch] -= parseFloat(tx.value);
-          result.balanceHistory[epoch] -= txFee;
+          result.balanceHistory[epoch] =
+            result.balanceHistory[epoch].minus(bigTxValue);
         } else if (tx.type === TransactionType.functionCall) {
           if (
             ['claimRewards', 'reDelegateRewards'].includes(tx.method as string)
           ) {
-            result.balanceHistory[epoch] += parseFloat(tx.value);
-            result.balanceHistory[epoch] -= txFee;
+            result.balanceHistory[epoch] =
+              result.balanceHistory[epoch].plus(bigTxValue);
+          } else if (tx.method === 'unBond') {
+            if (parseFloat(tx.fee) < 0) {
+              txFee = new BigNumber('0.031760467');
+
+              result.fees = result.fees.plus(txFee);
+              result.available = result.available.minus(txFee);
+              result.balanceHistory[epoch] =
+                result.balanceHistory[epoch].minus(txFee);
+            }
+          } else if (tx.method === 'unStake') {
+            if (parseFloat(tx.fee) < 0) {
+              txFee = new BigNumber('0.036805533');
+              result.fees = result.fees.plus(txFee);
+              result.available = result.available.minus(txFee);
+              result.balanceHistory[epoch] =
+                result.balanceHistory[epoch].minus(txFee);
+            }
+          } else if (tx.method === 'stake') {
+            if (parseFloat(tx.fee) < 0) {
+              txFee = new BigNumber('0.039378847');
+              result.fees = result.fees.plus(txFee);
+              result.available = result.available.minus(txFee);
+              result.balanceHistory[epoch] =
+                result.balanceHistory[epoch].minus(txFee);
+            }
           }
         }
       } else {
+        if (tx.type !== TransactionType.receiver) {
+          result.balanceHistory[epoch] = new BigNumber(0).minus(txFee);
+        }
         if (tx.type === TransactionType.receiver) {
-          result.balanceHistory[epoch] = parseFloat(tx.value);
+          result.balanceHistory[epoch] = bigTxValue;
         } else if (tx.type === TransactionType.transfer) {
-          result.balanceHistory[epoch] = -parseFloat(tx.value);
-          result.balanceHistory[epoch] -= txFee;
+          result.balanceHistory[epoch] = new BigNumber(0).minus(bigTxValue);
         } else if (tx.type === TransactionType.functionCall) {
           if (
             ['claimRewards', 'reDelegateRewards'].includes(tx.method as string)
           ) {
-            result.balanceHistory[epoch] = parseFloat(tx.value);
-            result.balanceHistory[epoch] -= txFee;
+            result.balanceHistory[epoch] =
+              result.balanceHistory[epoch].plus(bigTxValue);
+          } else if (tx.method === 'unBond') {
+            if (parseFloat(tx.fee) < 0) {
+              txFee = new BigNumber('0.031760467');
+              result.fees = result.fees.plus(txFee);
+              result.available = result.available.minus(txFee);
+              result.balanceHistory[epoch] = new BigNumber(0).minus(txFee);
+            }
+          } else if (tx.method === 'unStake') {
+            if (parseFloat(tx.fee) < 0) {
+              txFee = new BigNumber('0.036805533');
+              result.fees = result.fees.plus(txFee);
+              result.available = result.available.minus(txFee);
+              result.balanceHistory[epoch] = new BigNumber(0).minus(txFee);
+            }
+          } else if (tx.method === 'stake') {
+            if (parseFloat(tx.fee) < 0) {
+              txFee = new BigNumber('0.039378847');
+              result.fees = result.fees.plus(txFee);
+              result.available = result.available.minus(txFee);
+              result.balanceHistory[epoch] = new BigNumber(0).minus(txFee);
+            }
           }
         }
       }
@@ -262,10 +333,12 @@ export class AccountService {
       fetchPrice.push(getEpochTimePrice(epoch, tx.timestamp, tx.txHash));
 
       if (tx.type === TransactionType.transfer) {
+        result.available = result.available.minus(bigTxValue);
         result.actionTypes.outgoing += 1;
       }
       if (tx.type === TransactionType.receiver) {
         result.actionTypes.incoming += 1;
+        result.available = result.available.plus(bigTxValue);
       }
       if (tx.type === TransactionType.self) {
         result.actionTypes.selfTransfer += 1;
@@ -393,9 +466,8 @@ export class AccountService {
           break;
         case 'delegate':
           if (result.staked[tx.receiver]) {
-            result.staked[tx.receiver] = result.staked[tx.receiver].plus(
-              new BigNumber(tx.value),
-            );
+            result.staked[tx.receiver] =
+              result.staked[tx.receiver].plus(bigTxValue);
             if (!result.epochHistoryStaked[epoch]) {
               result.epochHistoryStaked[epoch] = {
                 staked: {
@@ -426,14 +498,12 @@ export class AccountService {
               };
             }
           }
-
-          result.available = result.available.minus(new BigNumber(tx.value));
+          result.available = result.available.minus(bigTxValue);
           break;
         case 'reDelegateRewards':
           if (tx.receiver in result.staked) {
-            result.staked[tx.receiver] = result.staked[tx.receiver].plus(
-              new BigNumber(tx.value),
-            );
+            result.staked[tx.receiver] =
+              result.staked[tx.receiver].plus(bigTxValue);
             if (!result.epochHistoryStaked[epoch]) {
               result.epochHistoryStaked[epoch] = {
                 staked: {
@@ -450,23 +520,20 @@ export class AccountService {
               }
             }
           } else {
-            result.staked[tx.receiver] = new BigNumber(tx.value);
+            result.staked[tx.receiver] = bigTxValue;
           }
-
           break;
         case 'claimRewards':
-          result.available = result.available.plus(new BigNumber(tx.value));
+          result.available = result.available.plus(bigTxValue);
           break;
         case 'unDelegate':
           if (!result.unDelegated[tx.receiver]) {
             result.unDelegated[tx.receiver] = new BigNumber(0);
           }
-          result.unDelegated[tx.receiver] = result.unDelegated[
-            tx.receiver
-          ].plus(tx.value);
-          result.staked[tx.receiver] = result.staked[tx.receiver].minus(
-            tx.value,
-          );
+          result.unDelegated[tx.receiver] =
+            result.unDelegated[tx.receiver].plus(bigTxValue);
+          result.staked[tx.receiver] =
+            result.staked[tx.receiver].minus(bigTxValue);
           if (!result.epochHistoryStaked[epoch]) {
             result.epochHistoryStaked[epoch] = {
               staked: {
@@ -485,70 +552,63 @@ export class AccountService {
 
           break;
         case 'withdraw':
-          result.unDelegated[tx.receiver] = result.unDelegated[
-            tx.receiver
-          ].minus(new BigNumber(tx.value));
-          result.available = result.available.plus(new BigNumber(tx.value));
-
+          result.unDelegated[tx.receiver] =
+            result.unDelegated[tx.receiver].minus(bigTxValue);
+          result.available = result.available.plus(bigTxValue);
           break;
         case 'createNewDelegationContract':
           tx.scResults.forEach((scTX: any) => {
             if (scTX.data !== undefined) {
               const agency = scTX.data.split('@')[2];
-              result.available = result.available.plus(
-                new BigNumber(scTX.value),
-              );
               result.staked = {
-                [agency]: new BigNumber(tx.value),
+                [agency]: bigTxValue,
               };
               result.epochHistoryStaked[epoch] = {
                 staked: {
-                  [agency]: new BigNumber(tx.value),
+                  [agency]: bigTxValue,
                 },
               };
             }
           });
-          result.available = result.available.minus(new BigNumber(tx.value));
+          result.available = result.available.minus(bigTxValue);
 
           break;
         case 'stake':
-          result.available = result.available.minus(new BigNumber(tx.value));
+          result.available = result.available.minus(bigTxValue);
           if (!(tx.receiver in result.staked)) {
-            result.staked[tx.receiver] = new BigNumber(tx.value);
+            result.staked[tx.receiver] = bigTxValue;
           } else {
-            result.staked[tx.receiver] = result.staked[tx.receiver].plus(
-              new BigNumber(tx.value),
-            );
+            result.staked[tx.receiver] =
+              result.staked[tx.receiver].plus(bigTxValue);
           }
           break;
         case 'unStake':
-          const value = new BigNumber(tx.value);
-          if (!(tx.receiver in result.unDelegated)) {
-            result.unDelegated[tx.receiver] = value;
-          } else {
-            result.unDelegated[tx.receiver] =
-              result.unDelegated[tx.receiver].plus(value);
-          }
-          if (result.staked[tx.receiver]) {
-            result.staked[tx.receiver] =
-              result.staked[tx.receiver].minus(value);
+          if (
+            tx.receiver ===
+            'erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt'
+          ) {
+            if (!(tx.receiver in result.unDelegated)) {
+              result.unDelegated[tx.receiver] = bigTxValue;
+            } else {
+              result.unDelegated[tx.receiver] =
+                result.unDelegated[tx.receiver].plus(bigTxValue);
+            }
+            if (result.staked[tx.receiver]) {
+              result.staked[tx.receiver] =
+                result.staked[tx.receiver].minus(bigTxValue);
+            }
           }
 
           break;
         case 'unBond':
-          result.available = result.available.plus(new BigNumber(tx.value));
+          result.available = result.available.plus(bigTxValue);
           if (
             tx.receiver ==
             'erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt'
           ) {
-            result.unDelegated[tx.receiver] = result.unDelegated[
-              tx.receiver
-            ].minus(new BigNumber(tx.value));
+            result.unDelegated[tx.receiver] =
+              result.unDelegated[tx.receiver].minus(bigTxValue);
           }
-          break;
-
-        default:
-          console.log('warning: unknown transaction: ' + tx.method);
           break;
       }
     }
@@ -572,11 +632,13 @@ export class AccountService {
     // Merge tx price
 
     // Compute balance history per epoch
-    let lastEpochHistoryTotal = 0;
-    const historyBalance: Dictionary<number> = {};
+    let lastEpochHistoryTotal = new BigNumber(0);
+    const historyBalance: Dictionary<BigNumber> = {};
     for (let epoch = firstWalletEpoch; epoch <= todayEpoch; epoch++) {
       if (epoch in result.balanceHistory) {
-        lastEpochHistoryTotal += result.balanceHistory[epoch];
+        lastEpochHistoryTotal = lastEpochHistoryTotal.plus(
+          result.balanceHistory[epoch],
+        );
         historyBalance[epoch] = lastEpochHistoryTotal;
       } else {
         historyBalance[epoch] = lastEpochHistoryTotal;
@@ -608,9 +670,7 @@ export class AccountService {
         result.unDelegated[address] = result.unDelegated[address].toFixed();
       }
     });
-    result.available = NumberUtils.denominateFloat({
-      input: result.available.toFixed(),
-    });
+    // result.available = NumberUtils.denominateFloat(result.available.toString());
     return result;
   }
 

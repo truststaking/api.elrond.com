@@ -1,23 +1,24 @@
-import { Injectable, CanActivate, ExecutionContext, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  Logger,
+} from '@nestjs/common';
 import { verify } from 'jsonwebtoken';
 import { ApiConfigService } from 'src/common/api.config.service';
 
 @Injectable()
 export class JwtAuthenticateGuard implements CanActivate {
-  private readonly logger: Logger
+  private readonly logger: Logger;
 
-  constructor(
-    private readonly apiConfigService: ApiConfigService
-  ) {
+  constructor(private readonly apiConfigService: ApiConfigService) {
     this.logger = new Logger(JwtAuthenticateGuard.name);
   }
 
-  async canActivate(
-    context: ExecutionContext,
-  ): Promise<boolean> {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
 
-    let authorization: string = request.headers['authorization'];
+    const authorization: string = request.headers['authorization'];
     if (!authorization) {
       return false;
     }
@@ -32,12 +33,11 @@ export class JwtAuthenticateGuard implements CanActivate {
           if (err) {
             reject(err);
           }
-        
+
           // @ts-ignore
           resolve(decoded.user);
         });
       });
-
     } catch (error) {
       this.logger.error(error);
       return false;
