@@ -665,6 +665,9 @@ export class AccountController {
       from,
       size,
     });
+    if (transactions.length === 0) {
+      return new History();
+    }
     return await this.accountService.analyseTransactions(transactions, address);
   }
 }
