@@ -69,13 +69,13 @@ export class ProviderService {
 
   async getProviders(query: ProviderFilter): Promise<Provider[]> {
     let providers = await this.getAllProviders();
-    let nodes = await this.nodeService.getAllNodes();
+    const nodes = await this.nodeService.getAllNodes();
 
-    let nodesGroupedByProvider: { [key: string]: any[] } = nodes.groupBy(
+    const nodesGroupedByProvider: { [key: string]: any[] } = nodes.groupBy(
       (x) => x.provider,
     );
 
-    let providersDelegationData: DelegationData[] =
+    const providersDelegationData: DelegationData[] =
       await this.getDelegationProviders();
 
     providers.forEach((element) => {
@@ -107,7 +107,6 @@ export class ProviderService {
       element.topUp = nodesInfos.topUp;
       element.locked = nodesInfos.locked;
 
-      // @ts-ignore
       delete element.owner;
     });
 
@@ -319,11 +318,11 @@ export class ProviderService {
           `Could not get provider metadata for address '${address}'`,
         );
         this.logger.error(error);
-        return { name: null, website: null, identity: null };
+        return { name: '', website: '', identity: '', address };
       }
     }
 
-    return { name: null, website: null, identity: null };
+    return { name: '', website: '', identity: '', address };
   }
 
   async getNumUsers(address: string) {

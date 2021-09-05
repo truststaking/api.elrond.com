@@ -53,11 +53,15 @@ import { WaitingListController } from './endpoints/waiting-list/waiting.list.con
 import { WaitingListService } from './endpoints/waiting-list/waiting.list.service';
 import { BlsService } from './common/bls.service';
 import { TagController } from './endpoints/nfttags/tag.controller';
+import { AVGAPRController } from './endpoints/avgapr/avgapr.controller';
+import { DistributionController } from './endpoints/distribution/distribution.controller';
 import { TagService } from './endpoints/nfttags/tag.service';
-const DailyRotateFile = require('winston-daily-rotate-file');
+import DailyRotateFile from 'winston-daily-rotate-file';
 import './utils/extensions/array.extensions';
 import './utils/extensions/date.extensions';
 import './utils/extensions/number.extensions';
+import { AVGAPRService } from './endpoints/avgapr/avgapr.service';
+import { DistributionService } from './endpoints/distribution/distribution.service';
 
 @Module({
   imports: [
@@ -88,6 +92,7 @@ import './utils/extensions/number.extensions';
   ],
   controllers: [
     NetworkController,
+    DistributionController,
     AccountController,
     TransactionController,
     TokenController,
@@ -106,8 +111,10 @@ import './utils/extensions/number.extensions';
     KeysController,
     WaitingListController,
     TagController,
+    AVGAPRController,
   ],
   providers: [
+    DistributionService,
     NetworkService,
     ApiConfigService,
     AccountService,
@@ -140,6 +147,7 @@ import './utils/extensions/number.extensions';
     WaitingListService,
     BlsService,
     TagService,
+    AVGAPRService,
   ],
   exports: [
     ApiConfigService,

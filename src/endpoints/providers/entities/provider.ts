@@ -1,12 +1,12 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { NodesInfos } from "./nodes.infos";
+import { ApiProperty } from '@nestjs/swagger';
+import { NodesInfos } from './nodes.infos';
 
 export class Provider extends NodesInfos {
   @ApiProperty()
   provider = '';
 
   @ApiProperty()
-  owner: string | null = null;
+  owner?: string | null = null;
 
   @ApiProperty()
   featured = false;

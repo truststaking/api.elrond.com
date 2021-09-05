@@ -21,7 +21,15 @@ import { ApiUtils } from 'src/utils/api.utils';
 import { BinaryUtils } from 'src/utils/binary.utils';
 import { TransactionService } from '../transactions/transaction.service';
 import { TransactionFilter } from '../transactions/entities/transaction.filter';
-import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
+import {
+  getEpoch,
+  getEpochTimePrice,
+  getProfile,
+  getTimestampByEpoch,
+  getTodayPrice,
+  getTodayRates,
+  Phase3,
+} from 'src/utils/trust.utils';
 import {
   TransactionStatus,
   TransactionType,
@@ -30,8 +38,14 @@ import { TransactionHistory } from '../transactions/entities/transaction.labels'
 import { ApiProperty } from '@nestjs/swagger';
 import BigNumber from 'bignumber.js';
 import { NumberUtils } from 'src/utils/number.utils';
-
-const db = new DynamoDBClient({ region: 'eu-west-1' });
+import {
+  ProxyProvider,
+  SmartContract,
+  Address,
+  ContractFunction,
+  BytesValue,
+} from '@elrondnetwork/erdjs';
+import { ProviderService } from '../providers/provider.service';
 interface Dictionary<T> {
   [Key: string]: T;
 }
@@ -42,9 +56,17 @@ interface GenesisDetails {
   balance: string;
   delegation: GenesisDelegation;
 }
+
 interface GenesisDelegation {
   address: string;
   value: string;
+}
+interface FullEpochStaked {
+  staked: SCEpochStaked;
+}
+
+interface SCEpochStaked {
+  [Key: string]: number;
 }
 export class ActionTypes {
   @ApiProperty()
@@ -65,6 +87,38 @@ export class BalanceHystory {
   selfTransfer = 0;
   @ApiProperty()
   scCalls = 0;
+}
+export class Rewards {
+  @ApiProperty()
+  rewardDistributed = '';
+  @ApiProperty()
+  totalActiveStake = '';
+  @ApiProperty()
+  serviceFee = '';
+  @ApiProperty()
+  epoch = 0;
+  @ApiProperty()
+  staked = '';
+  @ApiProperty()
+  ownerProfit = '';
+  @ApiProperty()
+  toBeDistributed = '';
+  @ApiProperty()
+  APROwner = '';
+  @ApiProperty()
+  APRDelegator = '';
+  @ApiProperty()
+  usdRewards = '';
+  @ApiProperty()
+  reward = '';
+  @ApiProperty()
+  usdEpoch = 0;
+  @ApiProperty()
+  date = '';
+  @ApiProperty()
+  usdRewardsToday = '';
+  @ApiProperty()
+  unix = 0;
 }
 export class History {
   @ApiProperty()
@@ -87,6 +141,8 @@ export class History {
   countTx = 0;
   @ApiProperty()
   points = 50;
+  @ApiProperty()
+  rewards: any = {};
   @ApiProperty()
   topSenders: Dictionary<number> = {};
   @ApiProperty()
@@ -114,6 +170,7 @@ export class AccountService {
     private readonly vmQueryService: VmQueryService,
     private readonly apiConfigService: ApiConfigService,
     private readonly transactionService: TransactionService,
+    private readonly providerService: ProviderService,
   ) {
     this.logger = new Logger(AccountService.name);
   }
@@ -636,7 +693,7 @@ export class AccountService {
       if (result.staked[address].isLessThan(new BigNumber(1))) {
         delete result.staked[address];
       } else {
-        result.staked[address] = result.staked[address].toFixed();
+        result.staked[address] = result.staked[address];
       }
     });
     Object.keys(result.epochHistoryStaked).forEach(function (epoch) {
@@ -655,7 +712,7 @@ export class AccountService {
         result.unDelegated[address] = result.unDelegated[address].toFixed();
       }
     });
-    // result.available = NumberUtils.denominateFloat(result.available.toString());
+    result.rewards = await this.getRewardsHistory(result, address);
     return result;
   }
 
@@ -895,6 +952,206 @@ export class AccountService {
 
     return data;
   }
+  async getRewardsHistory(data: History, address: string) {
+    const todayPrice = await getTodayPrice();
+    const todayRates = await getTodayRates();
+    const fullEpochsStakedAmounts: Dictionary<FullEpochStaked> = {};
+    const todayEpoch = getEpoch(Math.floor(Date.now() / 1000));
+    const lastEpochHistory: Dictionary<number> = {};
+    const result: Dictionary<Rewards[]> = {};
+    const providers: Dictionary<boolean> = {};
+    const total: Dictionary<BigNumber> = {};
+    const totalUSD: Dictionary<BigNumber> = {};
+    const avgPriceReward: Dictionary<BigNumber> = {};
+    const avgAPR: Dictionary<BigNumber> = {};
+    const avgEGLD: Dictionary<BigNumber> = {};
+
+    const calculateRewardPerSC = async (
+      agencySC: string,
+      epoch: number,
+      todayPrice: number,
+    ) => {
+      const savedStaked = fullEpochsStakedAmounts[epoch].staked[agencySC];
+      const agencyInfo = await calculateReward(
+        epoch,
+        savedStaked,
+        agencySC,
+        providers[agencySC] || false,
+        todayPrice,
+      );
+      if (!total[agencySC]) {
+        total[agencySC] = new BigNumber(agencyInfo['reward']);
+      } else {
+        total[agencySC] = total[agencySC].plus(
+          new BigNumber(agencyInfo['reward']),
+        );
+      }
+
+      if (!totalUSD[agencySC]) {
+        totalUSD[agencySC] = new BigNumber(agencyInfo['usdRewards']);
+        avgPriceReward[agencySC] = new BigNumber(agencyInfo['usdEpoch']);
+        avgAPR[agencySC] = new BigNumber(agencyInfo['APRDelegator']);
+        avgEGLD[agencySC] = new BigNumber(agencyInfo['reward']);
+      } else {
+        totalUSD[agencySC] = totalUSD[agencySC].plus(
+          new BigNumber(agencyInfo['usdRewards']),
+        );
+        avgAPR[agencySC] = avgAPR[agencySC].plus(
+          new BigNumber(agencyInfo['APRDelegator']),
+        );
+        avgPriceReward[agencySC] = avgPriceReward[agencySC].plus(
+          new BigNumber(agencyInfo['usdEpoch']),
+        );
+        avgEGLD[agencySC] = avgEGLD[agencySC].plus(
+          new BigNumber(agencyInfo['reward']),
+        );
+      }
+
+      if (!result[agencySC]) {
+        result[agencySC] = [];
+      }
+
+      result[agencySC].push({
+        ...agencyInfo,
+      });
+    };
+    for (const agencySC of Object.keys(data.staked)) {
+      if (!providers[agencySC]) {
+        providers[agencySC] = await isOwner(agencySC, address);
+      }
+    }
+    const promisesEpoch = [];
+    for (let epoch = Phase3.epoch - 15; epoch <= todayEpoch; epoch++) {
+      if (epoch in data.epochHistoryStaked) {
+        Object.keys(lastEpochHistory).forEach((SC) => {
+          if (!fullEpochsStakedAmounts[epoch]) {
+            fullEpochsStakedAmounts[epoch] = { staked: {} };
+          }
+          if (lastEpochHistory[SC] > 0) {
+            fullEpochsStakedAmounts[epoch].staked = {
+              ...fullEpochsStakedAmounts[epoch].staked,
+              [SC]: lastEpochHistory[SC],
+            };
+          } else {
+            delete lastEpochHistory[SC];
+          }
+        });
+        Object.keys(data.epochHistoryStaked[epoch].staked).forEach(
+          (agencySC) => {
+            lastEpochHistory[agencySC] =
+              data.epochHistoryStaked[epoch].staked[agencySC];
+          },
+        );
+        if (
+          epoch > Phase3.epoch &&
+          fullEpochsStakedAmounts[epoch] &&
+          fullEpochsStakedAmounts[epoch].staked !== undefined
+        ) {
+          for (const agencySC of Object.keys(
+            fullEpochsStakedAmounts[epoch].staked,
+          )) {
+            promisesEpoch.push(
+              calculateRewardPerSC(agencySC, epoch, todayPrice),
+            );
+          }
+        }
+      } else {
+        Object.keys(lastEpochHistory).forEach((SC) => {
+          if (!fullEpochsStakedAmounts[epoch]) {
+            fullEpochsStakedAmounts[epoch] = { staked: {} };
+          }
+
+          if (lastEpochHistory[SC] > 0) {
+            fullEpochsStakedAmounts[epoch].staked = {
+              ...fullEpochsStakedAmounts[epoch].staked,
+              [SC]: lastEpochHistory[SC],
+            };
+          } else {
+            delete lastEpochHistory[SC];
+          }
+        });
+        if (
+          epoch > Phase3.epoch &&
+          fullEpochsStakedAmounts[epoch] &&
+          fullEpochsStakedAmounts[epoch].staked !== undefined
+        ) {
+          for (const agencySC of Object.keys(
+            fullEpochsStakedAmounts[epoch].staked,
+          )) {
+            promisesEpoch.push(
+              calculateRewardPerSC(agencySC, epoch, todayPrice),
+            );
+          }
+        }
+      }
+    }
+
+    await Promise.all(promisesEpoch);
+
+    const metaDataPromises = [];
+    const keybaseIDs: Dictionary<any> = {};
+    let full_total = new BigNumber(0);
+    let fullUSD_total = new BigNumber(0);
+
+    const final_result: Dictionary<Rewards[]> = {};
+    const final_total: Dictionary<number> = {};
+    const final_totalUSD: Dictionary<number> = {};
+    const final_avgPriceReward: Dictionary<number> = {};
+    const final_avgRewardDaily: Dictionary<number> = {};
+    const final_avgAPR: Dictionary<number> = {};
+    const final_avgEGLD: Dictionary<number> = {};
+
+    for (const scAddress of Object.keys(total)) {
+      full_total = full_total.plus(total[scAddress]);
+      fullUSD_total = fullUSD_total.plus(totalUSD[scAddress]);
+      final_total[scAddress] = parseFloat(total[scAddress].toFixed());
+      final_avgPriceReward[scAddress] = avgPriceReward[scAddress]
+        .dividedBy(result[scAddress].length)
+        .toNumber();
+      final_avgRewardDaily[scAddress] = totalUSD[scAddress]
+        .dividedBy(result[scAddress].length)
+        .toNumber();
+      final_avgAPR[scAddress] = avgAPR[scAddress]
+        .dividedBy(result[scAddress].length)
+        .toNumber();
+      final_avgEGLD[scAddress] = parseFloat(
+        avgEGLD[scAddress].dividedBy(result[scAddress].length).toString(),
+      );
+      final_totalUSD[scAddress] = parseFloat(totalUSD[scAddress].toFixed());
+      metaDataPromises.push(
+        this.providerService.getProviderMetadata(scAddress),
+      );
+    }
+    const getProfileResponses = [];
+    const metaDataResponse = await Promise.all(metaDataPromises);
+    for (const response of metaDataResponse) {
+      getProfileResponses.push(getProfile(response['identity']));
+    }
+    // let fifoRewards = [];
+    const keybaseReponses = await Promise.all(getProfileResponses);
+    Object.keys(final_total).forEach((SC, index) => {
+      result[SC].sort(function (a, b) {
+        return b.epoch - a.epoch;
+      });
+      final_result[SC] = result[SC];
+      keybaseIDs[SC] = keybaseReponses[index];
+    });
+    const toReturn = {
+      todayRates,
+      rewards_per_epoch: final_result,
+      keybase: keybaseIDs,
+      total_per_provider: final_total,
+      avgPrice_per_provider: final_avgPriceReward,
+      avgAPR_per_provider: final_avgAPR,
+      avgEGLD_per_provider: final_avgEGLD,
+      avgUSDProvider: final_avgRewardDaily,
+      totalUSD_per_provider: final_totalUSD,
+      activeStaked: data.staked,
+      total: parseFloat(full_total.toFixed()),
+      totalUSD: parseFloat(fullUSD_total.toFixed()),
+    };
+    return { ...toReturn };
+  }
 
   decode(value: string): string {
     const hex = Buffer.from(value, 'base64').toString('hex');
@@ -933,87 +1190,8 @@ function daysSinceTime($start_ts: number, $end_ts: number) {
   const diff = $end_ts - $start_ts;
   return Math.round(diff / 86400);
 }
-const getEpochTimePrice = async (
-  epoch: number,
-  time: number,
-  tx: string,
-): Promise<any> => {
-  const timeB = time - 50;
-  const timeG = time + 50;
-  const params = {
-    TableName: 'EGLDUSD',
-    Index: 'price',
-    KeyConditionExpression: 'epoch = :ep AND #time BETWEEN :timB AND :timG',
-    ExpressionAttributeNames: {
-      '#time': 'timestamp',
-    },
-    ExpressionAttributeValues: {
-      ':ep': { N: epoch.toString() },
-      ':timB': { N: `${timeB}` },
-      ':timG': { N: `${timeG}` },
-    },
-    Limit: 1,
-  };
-  const result = await db.send(new QueryCommand(params));
-  let price: string | undefined = '0';
-  try {
-    if (result.Items) {
-      price = result.Items[0].price.S;
-    }
-  } catch (error) {
-    const params = {
-      TableName: 'EGLDUSD',
-      Index: 'price',
-      KeyConditionExpression: 'epoch = :ep AND #time BETWEEN :timB AND :timG',
-      ExpressionAttributeNames: {
-        '#time': 'timestamp',
-      },
-      ExpressionAttributeValues: {
-        ':ep': { N: (epoch - 1).toString() },
-        ':timB': { N: `${timeB}` },
-        ':timG': { N: `${timeG}` },
-      },
-      Limit: 1,
-    };
-    const result = await db.send(new QueryCommand(params));
-    try {
-      if (result.Items) {
-        price = result.Items[0].price.S;
-      }
-    } catch (error) {
-      const params = {
-        TableName: 'EGLDUSD',
-        Index: 'price',
-        KeyConditionExpression: 'epoch = :ep AND #time BETWEEN :timB AND :timG',
-        ExpressionAttributeNames: {
-          '#time': 'timestamp',
-        },
-        ExpressionAttributeValues: {
-          ':ep': { N: (epoch + 1).toString() },
-          ':timB': { N: `${timeB}` },
-          ':timG': { N: `${timeG}` },
-        },
-        Limit: 1,
-      };
-      const result = await db.send(new QueryCommand(params));
-      try {
-        if (result.Items) {
-          price = result.Items[0].price.S;
-        }
-      } catch (error) {
-        console.log(epoch);
-        console.log('Start', timeB, ' End: ', timeG, ' Time: ', time);
-      }
-    }
-    // console.log(result);
-  }
-  return { price, txHash: tx };
-};
 
-const Phase3 = {
-  timestamp: 1617633000,
-  epoch: 249,
-};
+const epochPrice: Dictionary<string> = {};
 
 // const getTimestampByEpoch = (epoch: number): number => {
 //   let diff;
@@ -1026,13 +1204,197 @@ const Phase3 = {
 //   }
 // };
 
-const getEpoch = (timestamp: number): number => {
-  let diff;
-  if (timestamp >= Phase3.timestamp) {
-    diff = timestamp - Phase3.timestamp;
-    return Phase3.epoch + Math.floor(diff / (60 * 60 * 24));
+function DecimalHexTwosComplement(decimal: number) {
+  const size = 8;
+  let hexadecimal = '';
+  if (decimal >= 0) {
+    hexadecimal = decimal.toString(16);
+
+    while (hexadecimal.length % size != 0) {
+      hexadecimal = '' + 0 + hexadecimal;
+    }
+
+    return hexadecimal;
   } else {
-    diff = Phase3.timestamp - timestamp;
-    return Phase3.epoch - Math.floor(diff / (60 * 60 * 24));
+    hexadecimal = Math.abs(decimal).toString(16);
+    while (hexadecimal.length % size != 0) {
+      hexadecimal = '' + 0 + hexadecimal;
+    }
+
+    let output = '';
+    for (let i = 0; i < hexadecimal.length; i++) {
+      output += (0x0f - parseInt(hexadecimal[i], 16)).toString(16);
+    }
+
+    output = (0x01 + parseInt(output, 16)).toString(16);
+    return output;
   }
+}
+function hexToDec(hex: string) {
+  return hex
+    .toLowerCase()
+    .split('')
+    .reduce((result, ch) => result * 16 + '0123456789abcdefgh'.indexOf(ch), 0);
+}
+const calculateReward = async (
+  epoch: number,
+  amount: number,
+  agency: string,
+  isOwner: boolean,
+  todayPrice: number,
+): Promise<Rewards> => {
+  const provider = new ProxyProvider('https://api.elrond.com', {
+    timeout: 25000,
+  });
+  const delegationContract = new SmartContract({
+    address: new Address(agency),
+  });
+
+  if (epoch) {
+    const response = await delegationContract.runQuery(provider, {
+      func: new ContractFunction('getRewardData'),
+      args: [BytesValue.fromHex(DecimalHexTwosComplement(epoch))],
+    });
+    if (response.returnCode.toString() === 'ok') {
+      const agency_reward: Rewards = new Rewards();
+      agency_reward.rewardDistributed = new BigNumber(
+        hexToDec(Buffer.from(response.returnData[0], 'base64').toString('hex')),
+      ).toFixed();
+
+      agency_reward.totalActiveStake = new BigNumber(
+        hexToDec(Buffer.from(response.returnData[1], 'base64').toString('hex')),
+      ).toFixed();
+      agency_reward.serviceFee = new BigNumber(
+        hexToDec(Buffer.from(response.returnData[2], 'base64').toString('hex')),
+      ).toFixed();
+
+      agency_reward['epoch'] = epoch;
+      agency_reward['staked'] = amount.toString();
+      const ownerProfit = new BigNumber(agency_reward.serviceFee)
+        .dividedBy(10000)
+        .multipliedBy(new BigNumber(agency_reward.rewardDistributed));
+      agency_reward['ownerProfit'] = NumberUtils.denominateFloat(
+        ownerProfit.toFixed(),
+      );
+      const toBeDistributed = new BigNumber(
+        agency_reward.rewardDistributed,
+      ).minus(new BigNumber(ownerProfit));
+      agency_reward['toBeDistributed'] = NumberUtils.denominateFloat(
+        toBeDistributed.toString(),
+      );
+      let reward = new BigNumber(toBeDistributed).multipliedBy(
+        new BigNumber(agency_reward['staked']),
+      );
+
+      reward = new BigNumber(reward).dividedBy(
+        new BigNumber(agency_reward.totalActiveStake),
+      );
+      if (isOwner) {
+        reward = reward.plus(
+          ownerProfit.dividedBy(new BigNumber(Math.pow(10, 18))),
+        );
+      }
+      agency_reward['APROwner'] = new BigNumber(agency_reward.rewardDistributed)
+        .multipliedBy(36500)
+        .dividedBy(new BigNumber(agency_reward.totalActiveStake))
+        .toFixed();
+      agency_reward['APRDelegator'] = new BigNumber(agency_reward['APROwner'])
+        .minus(
+          new BigNumber(agency_reward['APROwner']).multipliedBy(
+            new BigNumber(agency_reward.serviceFee).dividedBy(10000),
+          ),
+        )
+        .toFixed();
+      agency_reward['rewardDistributed'] = NumberUtils.denominateFloat(
+        agency_reward.rewardDistributed,
+      );
+      agency_reward['totalActiveStake'] = NumberUtils.denominateFloat(
+        agency_reward.totalActiveStake.toString(),
+      );
+      agency_reward['reward'] = reward.toString();
+      let pricePerEpoch: string;
+      const timestamp = getTimestampByEpoch(epoch);
+      if (epoch in epochPrice) {
+        pricePerEpoch = epochPrice[epoch];
+      } else {
+        pricePerEpoch = (await getEpochTimePrice(epoch, timestamp, '')).price;
+        epochPrice[epoch] = pricePerEpoch;
+      }
+      agency_reward['usdRewards'] = parseFloat(
+        new BigNumber(pricePerEpoch).multipliedBy(reward).toFixed(),
+      ).toFixed(2);
+      agency_reward['usdRewardsToday'] = parseFloat(
+        new BigNumber(todayPrice).multipliedBy(reward).toFixed(),
+      ).toFixed(2);
+      agency_reward['usdEpoch'] = parseFloat(pricePerEpoch);
+      agency_reward['unix'] = timestamp * 1000;
+      const date = new Date(getTimestampByEpoch(epoch) * 1000);
+      agency_reward['date'] =
+        '' +
+        date.getDate() +
+        '/' +
+        (date.getMonth() + 1) +
+        '/' +
+        date.getFullYear();
+      return agency_reward;
+    } else {
+      const timestamp = getTimestampByEpoch(epoch);
+      const dateTime = new Date(timestamp * 1000);
+      let pricePerEpoch = '';
+      if (epoch in epochPrice) {
+        pricePerEpoch = epochPrice[epoch];
+      } else {
+        pricePerEpoch = (await getEpochTimePrice(epoch, timestamp, '')).price;
+        epochPrice[epoch] = pricePerEpoch;
+      }
+      return {
+        staked: amount.toString(),
+        reward: '0',
+        usdEpoch: parseFloat(pricePerEpoch),
+        unix: timestamp * 1000,
+        usdRewardsToday: '0',
+        date:
+          '' +
+          dateTime.getDate() +
+          '/' +
+          (dateTime.getMonth() + 1) +
+          '/' +
+          dateTime.getFullYear(),
+        APRDelegator: '0',
+        APROwner: '0',
+        epoch,
+        ownerProfit: '0',
+        rewardDistributed: '0',
+        usdRewards: '0',
+        serviceFee: '0',
+        toBeDistributed: '0',
+        totalActiveStake: '0',
+      };
+    }
+  }
+
+  return new Rewards();
+};
+
+const isOwner = async (agency: string, address: string) => {
+  const provider = new ProxyProvider('https://gateway.elrond.com', {
+    timeout: 20000,
+  });
+  const delegationContract = new SmartContract({
+    address: new Address(agency),
+  });
+  let reply = false;
+  const response = await delegationContract.runQuery(provider, {
+    func: new ContractFunction('getContractConfig'),
+    args: [],
+  });
+  if (response.returnCode.toString() === 'ok') {
+    reply =
+      AddressUtils.bech32Encode(
+        Buffer.from(response.returnData[0], 'base64').toString('hex'),
+      ) == address;
+  } else {
+    console.log('Error');
+  }
+  return reply;
 };
