@@ -14,8 +14,12 @@ import { ElasticSortOrder } from 'src/common/entities/elastic/elastic.sort.order
 import { ElasticQuery } from 'src/common/entities/elastic/elastic.query';
 import { QueryType } from 'src/common/entities/elastic/query.type';
 import { Constants } from 'src/utils/constants';
-import * as genesis from 'src/utils/genesis.json';
-import * as nodeSetup from 'src/utils/nodeSetup.json';
+// import * as genesis from 'src/utils/genesis.json';
+// import * as nodeSetup from 'src/utils/nodeSetup.json';
+
+const genesis = require('./src/utils/genesis.json');
+const nodeSetup = require('./src/utils/nodeSetup.json');
+
 import { AddressUtils } from 'src/utils/address.utils';
 import { ApiUtils } from 'src/utils/api.utils';
 import { BinaryUtils } from 'src/utils/binary.utils';
