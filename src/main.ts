@@ -12,8 +12,8 @@ import { FieldsInterceptor } from './interceptors/fields.interceptor';
 import { PrivateAppModule } from './private.app.module';
 import { TransactionProcessorModule } from './transaction.processor.module';
 import { MetricsService } from './endpoints/metrics/metrics.service';
-import { CacheWarmerModule } from './cache.warmer.module';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+// import { CacheWarmerModule } from './cache.warmer.module';
+import { MicroserviceOptions } from '@nestjs/microservices';
 import { PubSubModule } from './pub.sub.module';
 import { Logger } from '@nestjs/common';
 import * as bodyParser from 'body-parser';
@@ -92,26 +92,15 @@ async function bootstrap() {
     await processorApp.listen(5001);
   }
 
-  if (apiConfigService.getIsCacheWarmerCronActive()) {
-    const processorApp = await NestFactory.create(CacheWarmerModule);
-    await processorApp.listen(6001);
-  }
+  // if (apiConfigService.getIsCacheWarmerCronActive()) {
+  //   const processorApp = await NestFactory.create(CacheWarmerModule);
+  //   await processorApp.listen(6001);
+  // }
 
   const logger = new Logger('Bootstrapper');
 
   const pubSubApp = await NestFactory.createMicroservice<MicroserviceOptions>(
     PubSubModule,
-    {
-      transport: Transport.REDIS,
-      options: {
-        url: `redis://${apiConfigService.getRedisUrl()}:6379`,
-        retryAttempts: 100,
-        retryDelay: 1000,
-        retry_strategy: function (_: any) {
-          return 1000;
-        },
-      },
-    },
   );
   pubSubApp.listen();
 
