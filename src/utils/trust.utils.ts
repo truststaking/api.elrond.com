@@ -30,14 +30,9 @@ export const getEpochTimePrice = async (
     Limit: 1,
   };
   const result = await db.send(new QueryCommand(params));
-  let price = '0';
+  let price: string | undefined = '0';
   try {
-    if (
-      result.Items &&
-      result.Items[0] &&
-      result.Items[0].price &&
-      result.Items[0].price.S
-    ) {
+    if (result.Items) {
       price = result.Items[0].price.S;
     }
   } catch (error) {
@@ -57,12 +52,7 @@ export const getEpochTimePrice = async (
     };
     const result = await db.send(new QueryCommand(params));
     try {
-      if (
-        result.Items &&
-        result.Items[0] &&
-        result.Items[0].price &&
-        result.Items[0].price.S
-      ) {
+      if (result.Items) {
         price = result.Items[0].price.S;
       }
     } catch (error) {
@@ -82,12 +72,7 @@ export const getEpochTimePrice = async (
       };
       const result = await db.send(new QueryCommand(params));
       try {
-        if (
-          result.Items &&
-          result.Items[0] &&
-          result.Items[0].price &&
-          result.Items[0].price.S
-        ) {
+        if (result.Items) {
           price = result.Items[0].price.S;
         }
       } catch (error) {
@@ -97,7 +82,7 @@ export const getEpochTimePrice = async (
     }
     // console.log(result);
   }
-  return { price, txHash: tx };
+  return { price: price as string, txHash: tx };
 };
 
 export const Phase3 = {

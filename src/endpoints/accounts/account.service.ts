@@ -88,6 +88,20 @@ export class BalanceHystory {
   @ApiProperty()
   scCalls = 0;
 }
+export class WaitingListRewards {
+  @ApiProperty()
+  date = '';
+  @ApiProperty()
+  epoch = 0;
+  @ApiProperty()
+  hash = '';
+  @ApiProperty()
+  usdReward = '';
+  @ApiProperty()
+  price = '';
+  @ApiProperty()
+  value = '';
+}
 export class Rewards {
   @ApiProperty()
   rewardDistributed = '';
@@ -152,12 +166,24 @@ export class History {
   @ApiProperty()
   epochHistoryStaked: Dictionary<any> = {};
   @ApiProperty()
+  phase2ClaimRewards: WaitingListRewards[] = [];
+  @ApiProperty()
+  waitingListRewards: WaitingListRewards[] = [];
+  @ApiProperty()
+  privateNodesRewards: WaitingListRewards[] = [];
+  @ApiProperty()
+  allRedelegations: Dictionary<WaitingListRewards[]> = {};
+  @ApiProperty()
+  allClaims: Dictionary<WaitingListRewards[]> = {};
+  @ApiProperty()
   topReceivers: Dictionary<number> = {};
   @ApiProperty()
   topCalls: Dictionary<number> = {};
   @ApiProperty({ type: TransactionHistory, isArray: true })
   transactions: TransactionHistory[] | undefined = undefined;
 }
+
+const epochPrice: Dictionary<string> = {};
 @Injectable()
 export class AccountService {
   private readonly logger: Logger;
@@ -276,6 +302,7 @@ export class AccountService {
 
     const todayEpoch = getEpoch(Math.floor(Date.now() / 1000));
     for (const tx of txs) {
+      const dateTime = new Date(tx.timestamp * 1000);
       const epoch = getEpoch(tx.timestamp);
       const bigTxValue = new BigNumber(tx.value);
       let txFee = new BigNumber(0);
@@ -346,6 +373,102 @@ export class AccountService {
           ) {
             result.balanceHistory[epoch] =
               result.balanceHistory[epoch].plus(bigTxValue);
+            if (tx.method === 'reDelegateRewards') {
+              let pricePerEpoch: string;
+              if (epoch in epochPrice) {
+                pricePerEpoch = epochPrice[epoch];
+              } else {
+                pricePerEpoch = (
+                  await getEpochTimePrice(epoch, tx.timestamp, '')
+                ).price;
+                epochPrice[epoch] = pricePerEpoch;
+              }
+              if (!result.allRedelegations[tx.receiver]) {
+                result.allRedelegations[tx.receiver] = [];
+              }
+              result.allRedelegations[tx.receiver].push({
+                date:
+                  '' +
+                  dateTime.getDate() +
+                  '/' +
+                  (dateTime.getMonth() + 1) +
+                  '/' +
+                  dateTime.getFullYear(),
+                value: tx.value,
+                epoch: epoch,
+                hash: tx.txHash,
+                price: pricePerEpoch,
+                usdReward: (
+                  parseFloat(pricePerEpoch) * parseFloat(tx.value)
+                ).toFixed(4),
+              });
+            }
+            if (
+              tx.method === 'claimRewards' &&
+              tx.receiver ===
+                'erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt'
+            ) {
+              let pricePerEpoch: string;
+              if (epoch in epochPrice) {
+                pricePerEpoch = epochPrice[epoch];
+              } else {
+                pricePerEpoch = (
+                  await getEpochTimePrice(epoch, tx.timestamp, '')
+                ).price;
+                epochPrice[epoch] = pricePerEpoch;
+              }
+              result.phase2ClaimRewards.push({
+                date:
+                  '' +
+                  dateTime.getDate() +
+                  '/' +
+                  (dateTime.getMonth() + 1) +
+                  '/' +
+                  dateTime.getFullYear(),
+                value: tx.value,
+                epoch: epoch,
+                hash: tx.txHash,
+                price: pricePerEpoch,
+                usdReward: (
+                  parseFloat(pricePerEpoch) * parseFloat(tx.value)
+                ).toFixed(4),
+              });
+            }
+
+            if (
+              tx.method === 'claimRewards' &&
+              tx.receiver !==
+                'erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt'
+            ) {
+              if (!result.allClaims[tx.receiver]) {
+                result.allClaims[tx.receiver] = [];
+              }
+              let pricePerEpoch: string;
+              if (epoch in epochPrice) {
+                pricePerEpoch = epochPrice[epoch];
+              } else {
+                pricePerEpoch = (
+                  await getEpochTimePrice(epoch, tx.timestamp, '')
+                ).price;
+                epochPrice[epoch] = pricePerEpoch;
+              }
+              result.allClaims[tx.receiver].push({
+                date:
+                  '' +
+                  dateTime.getDate() +
+                  '/' +
+                  (dateTime.getMonth() + 1) +
+                  '/' +
+                  dateTime.getFullYear(),
+                value: tx.value,
+                epoch: epoch,
+                hash: tx.txHash,
+                price: pricePerEpoch,
+                usdReward: (
+                  parseFloat(pricePerEpoch) * parseFloat(tx.value)
+                ).toFixed(4),
+              });
+            }
           } else if (tx.method === 'unBond') {
             if (parseFloat(tx.fee) < 0) {
               txFee = new BigNumber('0.031760467');
@@ -379,6 +502,60 @@ export class AccountService {
         result.actionTypes.outgoing += 1;
       }
       if (tx.type === TransactionType.receiver) {
+        if (
+          tx.sender ===
+          'erd1au4chwnhwl6uhykpuydzagc8qekwwmpar0v0m2xkjjfm52hp6veszyz54d'
+        ) {
+          let pricePerEpoch: string;
+          if (epoch in epochPrice) {
+            pricePerEpoch = epochPrice[epoch];
+          } else {
+            pricePerEpoch = (await getEpochTimePrice(epoch, tx.timestamp, ''))
+              .price;
+            epochPrice[epoch] = pricePerEpoch;
+          }
+          result.waitingListRewards.push({
+            date:
+              '' +
+              dateTime.getDate() +
+              '/' +
+              (dateTime.getMonth() + 1) +
+              '/' +
+              dateTime.getFullYear(),
+            value: tx.value,
+            epoch: epoch,
+            hash: tx.txHash,
+            price: pricePerEpoch,
+            usdReward: (
+              parseFloat(pricePerEpoch) * parseFloat(tx.value)
+            ).toFixed(4),
+          });
+        } else if (tx.sender === '4294967295') {
+          let pricePerEpoch: string;
+          if (epoch in epochPrice) {
+            pricePerEpoch = epochPrice[epoch];
+          } else {
+            pricePerEpoch = (await getEpochTimePrice(epoch, tx.timestamp, ''))
+              .price;
+            epochPrice[epoch] = pricePerEpoch;
+          }
+          result.privateNodesRewards.push({
+            date:
+              '' +
+              dateTime.getDate() +
+              '/' +
+              (dateTime.getMonth() + 1) +
+              '/' +
+              dateTime.getFullYear(),
+            value: tx.value,
+            epoch: epoch,
+            hash: tx.txHash,
+            price: pricePerEpoch,
+            usdReward: (
+              parseFloat(pricePerEpoch) * parseFloat(tx.value)
+            ).toFixed(4),
+          });
+        }
         result.actionTypes.incoming += 1;
         result.available = result.available.plus(bigTxValue);
       }
@@ -1190,19 +1367,6 @@ function daysSinceTime($start_ts: number, $end_ts: number) {
   const diff = $end_ts - $start_ts;
   return Math.round(diff / 86400);
 }
-
-const epochPrice: Dictionary<string> = {};
-
-// const getTimestampByEpoch = (epoch: number): number => {
-//   let diff;
-//   if (epoch >= Phase3.epoch) {
-//     diff = epoch - Phase3.epoch;
-//     return diff * (60 * 60 * 24) + Phase3.timestamp;
-//   } else {
-//     diff = Phase3.epoch - epoch;
-//     return Phase3.timestamp - diff * (60 * 60 * 24);
-//   }
-// };
 
 function DecimalHexTwosComplement(decimal: number) {
   const size = 8;
