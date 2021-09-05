@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ElasticService } from '../../common/elastic.service';
 import { GatewayService } from '../../common/gateway.service';
@@ -14,11 +15,8 @@ import { ElasticSortOrder } from 'src/common/entities/elastic/elastic.sort.order
 import { ElasticQuery } from 'src/common/entities/elastic/elastic.query';
 import { QueryType } from 'src/common/entities/elastic/query.type';
 import { Constants } from 'src/utils/constants';
-// import * as genesis from 'src/utils/genesis.json';
-// import * as nodeSetup from 'src/utils/nodeSetup.json';
-
-const genesis = require('./src/utils/genesis.json');
-const nodeSetup = require('./src/utils/nodeSetup.json');
+import { genesis } from 'src/utils/genesis';
+import { nodeSetup } from 'src/utils/nodeSetup';
 
 import { AddressUtils } from 'src/utils/address.utils';
 import { ApiUtils } from 'src/utils/api.utils';

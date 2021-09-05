@@ -1,4 +1,4 @@
-{
+export const genesis = {
   "erd100z5n2u5gre3fqzdhnu3twhjjt4m0ym8v8s5t2hg803ujrfhn7dqjs9fnf": {
     "balance": "39097695890410958904",
     "delegation": {

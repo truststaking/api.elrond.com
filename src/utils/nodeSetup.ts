@@ -1,4 +1,4 @@
-{
+export const nodeSetup = {
   "startTime": 1596117600,
   "roundDuration": 6000,
   "consensusGroupSize": 63,
