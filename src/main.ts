@@ -79,7 +79,7 @@ async function bootstrap() {
   SwaggerModule.setup('', publicApp, document);
 
   if (apiConfigService.getIsPublicApiActive()) {
-    await publicApp.listen(3001);
+    await publicApp.listen(8001);
   }
 
   if (apiConfigService.getIsPrivateApiActive()) {

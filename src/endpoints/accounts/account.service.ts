@@ -1560,7 +1560,7 @@ const isOwner = async (agency: string, address: string) => {
         Buffer.from(response.returnData[0], 'base64').toString('hex'),
       ) == address;
   } else {
-    console.log('Error');
+    console.log(response);
   }
   return reply;
 };
