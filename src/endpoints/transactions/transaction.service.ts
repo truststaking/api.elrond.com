@@ -198,7 +198,7 @@ export class TransactionService {
             const data_list = tx.scResults[index].data.split('@');
             const data_list_hex: string[] = [];
             if (data_list.length > 1) {
-              data_list.forEach((info: any) => {
+              data_list.forEach((info: any, kIndex: number) => {
                 const command = tx.data.toString().split('@');
                 if (
                   (command[0].localeCompare('createNewDelegationContract') ==
@@ -207,11 +207,14 @@ export class TransactionService {
                       'makeNewContractFromValidatorData',
                     ) == 0) &&
                   info.includes('000000') &&
-                  index === 2
+                  kIndex === 2
                 ) {
                   try {
+                    console.log(command[0]);
                     data_list_hex.push(AddressUtils.bech32Encode(info));
                   } catch (error) {
+                    console.log(command[0]);
+                    console.log(info);
                     console.log(error);
                   }
                 } else {
