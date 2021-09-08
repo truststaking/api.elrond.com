@@ -130,7 +130,7 @@ export const getTodayRates = async () => {
   return result;
 };
 
-export const getProfile = async (identity: string, address = {}) => {
+export const getProfile = async (identity: string, address = '') => {
   let value;
 
   try {

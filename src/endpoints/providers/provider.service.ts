@@ -312,7 +312,7 @@ export class ProviderService {
           Buffer.from(base64, 'base64').toString().trim().toLowerCase(),
         );
 
-        return { name, website, identity };
+        return { name, website, identity, address };
       } catch (error) {
         this.logger.error(
           `Could not get provider metadata for address '${address}'`,
