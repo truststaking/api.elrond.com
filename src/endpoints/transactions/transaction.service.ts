@@ -206,9 +206,14 @@ export class TransactionService {
                     command[0].localeCompare(
                       'makeNewContractFromValidatorData',
                     ) == 0) &&
-                  info.includes('000000')
+                  info.includes('000000') &&
+                  index === 2
                 ) {
-                  data_list_hex.push(AddressUtils.bech32Encode(info));
+                  try {
+                    data_list_hex.push(AddressUtils.bech32Encode(info));
+                  } catch (error) {
+                    console.log(error);
+                  }
                 } else {
                   const val = Buffer.from(info, 'hex').toString();
                   data_list_hex.push(val);
