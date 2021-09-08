@@ -12,7 +12,7 @@ import { FieldsInterceptor } from './interceptors/fields.interceptor';
 import { PrivateAppModule } from './private.app.module';
 import { TransactionProcessorModule } from './transaction.processor.module';
 import { MetricsService } from './endpoints/metrics/metrics.service';
-// import { CacheWarmerModule } from './cache.warmer.module';
+import { CacheWarmerModule } from './cache.warmer.module';
 import { MicroserviceOptions } from '@nestjs/microservices';
 import { PubSubModule } from './pub.sub.module';
 import { Logger } from '@nestjs/common';
@@ -92,10 +92,10 @@ async function bootstrap() {
     await processorApp.listen(5001);
   }
 
-  // if (apiConfigService.getIsCacheWarmerCronActive()) {
-  //   const processorApp = await NestFactory.create(CacheWarmerModule);
-  //   await processorApp.listen(6001);
-  // }
+  if (apiConfigService.getIsCacheWarmerCronActive()) {
+    const processorApp = await NestFactory.create(CacheWarmerModule);
+    await processorApp.listen(6001);
+  }
 
   const logger = new Logger('Bootstrapper');
 
