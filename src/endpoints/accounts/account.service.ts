@@ -751,6 +751,10 @@ export class AccountService {
           if (!result.unDelegated[tx.receiver]) {
             result.unDelegated[tx.receiver] = new BigNumber(0);
           }
+          if (!result.staked[tx.receiver]) {
+            result.staked[tx.receiver] = new BigNumber(0);
+          }
+
           result.unDelegated[tx.receiver] =
             result.unDelegated[tx.receiver].plus(bigTxValue);
           result.staked[tx.receiver] =

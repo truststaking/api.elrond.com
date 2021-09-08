@@ -209,14 +209,8 @@ export class TransactionService {
                   info.includes('000000') &&
                   kIndex === 2
                 ) {
-                  try {
-                    console.log(command[0]);
-                    data_list_hex.push(AddressUtils.bech32Encode(info));
-                  } catch (error) {
-                    console.log(command[0]);
-                    console.log(info);
-                    console.log(error);
-                  }
+                  console.log(command[0]);
+                  data_list_hex.push(AddressUtils.bech32Encode(info));
                 } else {
                   const val = Buffer.from(info, 'hex').toString();
                   data_list_hex.push(val);
