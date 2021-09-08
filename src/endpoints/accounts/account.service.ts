@@ -398,7 +398,7 @@ export class AccountService {
                 epoch: epoch,
                 hash: tx.txHash,
                 price: pricePerEpoch,
-                label: 'Re-Stake',
+                label: 'reward',
                 currency: 'EGLD',
                 usdReward: (
                   parseFloat(pricePerEpoch) * parseFloat(tx.value)
@@ -425,7 +425,7 @@ export class AccountService {
                 epoch: epoch,
                 hash: tx.txHash,
                 price: pricePerEpoch,
-                label: 'Claim',
+                label: 'income',
                 currency: 'EGLD',
                 usdReward: (
                   parseFloat(pricePerEpoch) * parseFloat(tx.value)
@@ -456,7 +456,7 @@ export class AccountService {
                 epoch: epoch,
                 hash: tx.txHash,
                 price: pricePerEpoch,
-                label: 'Claim',
+                label: 'income',
                 currency: 'EGLD',
                 usdReward: (
                   parseFloat(pricePerEpoch) * parseFloat(tx.value)
@@ -514,7 +514,7 @@ export class AccountService {
             epoch: epoch,
             hash: tx.txHash,
             price: pricePerEpoch,
-            label: 'Claim',
+            label: 'income',
             currency: 'EGLD',
             usdReward: (
               parseFloat(pricePerEpoch) * parseFloat(tx.value)
@@ -530,18 +530,12 @@ export class AccountService {
             epochPrice[epoch] = pricePerEpoch;
           }
           result.privateNodesRewards.push({
-            date:
-              '' +
-              dateTime.getDate() +
-              '/' +
-              (dateTime.getMonth() + 1) +
-              '/' +
-              dateTime.getFullYear(),
+            date: dateTime.toLocaleDateString(),
             value: tx.value,
             epoch: epoch,
             hash: tx.txHash,
             price: pricePerEpoch,
-            label: 'Rewards',
+            label: 'income',
             currency: 'EGLD',
             usdReward: (
               parseFloat(pricePerEpoch) * parseFloat(tx.value)
