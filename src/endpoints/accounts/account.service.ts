@@ -103,6 +103,10 @@ export class WaitingListRewards {
   price = '';
   @ApiProperty()
   value = '';
+  @ApiProperty()
+  label = '';
+  @ApiProperty()
+  currency = '';
 }
 export class Rewards {
   @ApiProperty()
@@ -389,17 +393,13 @@ export class AccountService {
                 result.allRedelegations[tx.receiver] = [];
               }
               result.allRedelegations[tx.receiver].push({
-                date:
-                  '' +
-                  dateTime.getDate() +
-                  '/' +
-                  (dateTime.getMonth() + 1) +
-                  '/' +
-                  dateTime.getFullYear(),
+                date: dateTime.toLocaleString(),
                 value: tx.value,
                 epoch: epoch,
                 hash: tx.txHash,
                 price: pricePerEpoch,
+                label: 'Re-Stake',
+                currency: 'EGLD',
                 usdReward: (
                   parseFloat(pricePerEpoch) * parseFloat(tx.value)
                 ).toFixed(4),
@@ -420,17 +420,13 @@ export class AccountService {
                 epochPrice[epoch] = pricePerEpoch;
               }
               result.phase2ClaimRewards.push({
-                date:
-                  '' +
-                  dateTime.getDate() +
-                  '/' +
-                  (dateTime.getMonth() + 1) +
-                  '/' +
-                  dateTime.getFullYear(),
+                date: dateTime.toLocaleString(),
                 value: tx.value,
                 epoch: epoch,
                 hash: tx.txHash,
                 price: pricePerEpoch,
+                label: 'Claim',
+                currency: 'EGLD',
                 usdReward: (
                   parseFloat(pricePerEpoch) * parseFloat(tx.value)
                 ).toFixed(4),
@@ -455,17 +451,13 @@ export class AccountService {
                 epochPrice[epoch] = pricePerEpoch;
               }
               result.allClaims[tx.receiver].push({
-                date:
-                  '' +
-                  dateTime.getDate() +
-                  '/' +
-                  (dateTime.getMonth() + 1) +
-                  '/' +
-                  dateTime.getFullYear(),
+                date: dateTime.toLocaleString(),
                 value: tx.value,
                 epoch: epoch,
                 hash: tx.txHash,
                 price: pricePerEpoch,
+                label: 'Claim',
+                currency: 'EGLD',
                 usdReward: (
                   parseFloat(pricePerEpoch) * parseFloat(tx.value)
                 ).toFixed(4),
@@ -517,17 +509,13 @@ export class AccountService {
             epochPrice[epoch] = pricePerEpoch;
           }
           result.waitingListRewards.push({
-            date:
-              '' +
-              dateTime.getDate() +
-              '/' +
-              (dateTime.getMonth() + 1) +
-              '/' +
-              dateTime.getFullYear(),
+            date: dateTime.toLocaleString(),
             value: tx.value,
             epoch: epoch,
             hash: tx.txHash,
             price: pricePerEpoch,
+            label: 'Claim',
+            currency: 'EGLD',
             usdReward: (
               parseFloat(pricePerEpoch) * parseFloat(tx.value)
             ).toFixed(4),
@@ -553,6 +541,8 @@ export class AccountService {
             epoch: epoch,
             hash: tx.txHash,
             price: pricePerEpoch,
+            label: 'Rewards',
+            currency: 'EGLD',
             usdReward: (
               parseFloat(pricePerEpoch) * parseFloat(tx.value)
             ).toFixed(4),
