@@ -393,7 +393,7 @@ export class AccountService {
                 result.allRedelegations[tx.receiver] = [];
               }
               result.allRedelegations[tx.receiver].push({
-                date: dateTime.toLocaleDateString(),
+                date: dateTime.toLocaleString('en-GB', { timeZone: 'UTC' }),
                 value: tx.value,
                 epoch: epoch,
                 hash: tx.txHash,
@@ -420,7 +420,7 @@ export class AccountService {
                 epochPrice[epoch] = pricePerEpoch;
               }
               result.phase2ClaimRewards.push({
-                date: dateTime.toLocaleDateString(),
+                date: dateTime.toLocaleString('en-GB', { timeZone: 'UTC' }),
                 value: tx.value,
                 epoch: epoch,
                 hash: tx.txHash,
@@ -451,7 +451,7 @@ export class AccountService {
                 epochPrice[epoch] = pricePerEpoch;
               }
               result.allClaims[tx.receiver].push({
-                date: dateTime.toLocaleDateString(),
+                date: dateTime.toLocaleString('en-GB', { timeZone: 'UTC' }),
                 value: tx.value,
                 epoch: epoch,
                 hash: tx.txHash,
@@ -509,7 +509,7 @@ export class AccountService {
             epochPrice[epoch] = pricePerEpoch;
           }
           result.waitingListRewards.push({
-            date: dateTime.toLocaleDateString(),
+            date: dateTime.toLocaleString('en-GB', { timeZone: 'UTC' }),
             value: tx.value,
             epoch: epoch,
             hash: tx.txHash,
@@ -530,7 +530,7 @@ export class AccountService {
             epochPrice[epoch] = pricePerEpoch;
           }
           result.privateNodesRewards.push({
-            date: dateTime.toLocaleDateString(),
+            date: dateTime.toLocaleString('en-GB', { timeZone: 'UTC' }),
             value: tx.value,
             epoch: epoch,
             hash: tx.txHash,
