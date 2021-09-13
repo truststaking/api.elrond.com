@@ -334,8 +334,6 @@ export class AccountService {
           if (
             ['claimRewards', 'reDelegateRewards'].includes(tx.method as string)
           ) {
-            result.balanceHistory[epoch] =
-              result.balanceHistory[epoch].plus(bigTxValue);
           } else if (tx.method === 'unBond') {
             if (parseFloat(tx.fee) < 0) {
               txFee = new BigNumber('0.031760467');
@@ -375,8 +373,6 @@ export class AccountService {
           if (
             ['claimRewards', 'reDelegateRewards'].includes(tx.method as string)
           ) {
-            result.balanceHistory[epoch] =
-              result.balanceHistory[epoch].plus(bigTxValue);
             if (tx.method === 'reDelegateRewards') {
               let pricePerEpoch: string;
               if (epoch in epochPrice) {
@@ -838,22 +834,6 @@ export class AccountService {
     });
     // Merge tx price
 
-    // Compute balance history per epoch
-    let lastEpochHistoryTotal = new BigNumber(0);
-    const historyBalance: Dictionary<BigNumber> = {};
-    for (let epoch = firstWalletEpoch; epoch <= todayEpoch; epoch++) {
-      if (epoch in result.balanceHistory) {
-        lastEpochHistoryTotal = lastEpochHistoryTotal.plus(
-          result.balanceHistory[epoch],
-        );
-        historyBalance[epoch] = lastEpochHistoryTotal;
-      } else {
-        historyBalance[epoch] = lastEpochHistoryTotal;
-      }
-    }
-    result.balanceHistory = historyBalance;
-    // Compute balance history per epoch
-
     Object.keys(result.staked).forEach(function (address) {
       if (result.staked[address].isLessThan(new BigNumber(1))) {
         delete result.staked[address];
@@ -878,6 +858,34 @@ export class AccountService {
       }
     });
     result.rewards = await this.getRewardsHistory(result, address);
+
+    Object.keys(result.rewards.rewards_per_epoch).forEach((SC: string) => {
+      result.rewards.rewards_per_epoch[SC].forEach((reward: Rewards) => {
+        if (reward.epoch in result.balanceHistory) {
+          result.balanceHistory[reward.epoch] = result.balanceHistory[
+            reward.epoch
+          ].plus(new BigNumber(reward.reward));
+        } else {
+          result.balanceHistory[reward.epoch] = new BigNumber(reward.reward);
+        }
+      });
+    });
+    // Compute balance history per epoch
+    let lastEpochHistoryTotal = new BigNumber(0);
+    const historyBalance: Dictionary<BigNumber> = {};
+    for (let epoch = firstWalletEpoch; epoch <= todayEpoch; epoch++) {
+      if (epoch in result.balanceHistory) {
+        lastEpochHistoryTotal = lastEpochHistoryTotal.plus(
+          result.balanceHistory[epoch],
+        );
+        historyBalance[epoch] = lastEpochHistoryTotal;
+      } else {
+        historyBalance[epoch] = lastEpochHistoryTotal;
+      }
+    }
+    result.balanceHistory = historyBalance;
+    // Compute balance history per epoch
+
     return result;
   }
 
