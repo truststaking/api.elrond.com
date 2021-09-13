@@ -1,5 +1,6 @@
 import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
 import axios from 'axios';
+import { TransactionHistory } from 'src/endpoints/transactions/entities/transaction.labels';
 
 export const db = new DynamoDBClient({ region: 'eu-west-1' });
 
@@ -7,7 +8,20 @@ interface GetPrice {
   price: string;
   txHash: string;
 }
-
+export interface Dictionary<T> {
+  [Key: string]: T;
+}
+export const removeDuplicate = (arr: TransactionHistory[]): void => {
+  const appeared: Dictionary<number> = {};
+  for (let i = 0; i < arr.length; ) {
+    if (!appeared.hasOwnProperty(arr[i].txHash)) {
+      appeared[arr[i].txHash] = 1;
+      i++;
+      continue;
+    }
+    arr.splice(i, 1);
+  }
+};
 export const getEpochTimePrice = async (
   epoch: number,
   time: number,

@@ -35,9 +35,11 @@ import { TransactionSendResult } from './entities/transaction.send.result';
 import {
   TransactionType,
   TransactionPoint,
+  TransactionStatus,
 } from './entities/transaction.status';
 import { TransactionOperationType } from './entities/transaction.operation.type';
 import { TransactionOperationAction } from './entities/transaction.operation.action';
+import { removeDuplicate } from 'src/utils/trust.utils';
 
 @Injectable()
 export class TransactionService {
@@ -110,6 +112,28 @@ export class TransactionService {
     );
   }
 
+  async getFullAccountHistory(filter: TransactionFilter): Promise<any> {
+    const getSendTransactions = await this.getTransactions({
+      ...filter,
+      status: TransactionStatus.success,
+    });
+    const getReceiveTransactions = await this.getTransactions({
+      ...filter,
+      status: TransactionStatus.success,
+    });
+    const transactions: TransactionHistory[] = [
+      ...getSendTransactions,
+      ...getReceiveTransactions,
+    ];
+    transactions.sort(function (
+      a: { timestamp: number },
+      b: { timestamp: number },
+    ) {
+      return a.timestamp - b.timestamp;
+    });
+    removeDuplicate(transactions);
+    return transactions;
+  }
   async getTransactions(
     filter: TransactionFilter,
   ): Promise<TransactionLabeled[]> {

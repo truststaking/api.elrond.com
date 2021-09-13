@@ -21,9 +21,9 @@ import { nodeSetup } from 'src/utils/nodeSetup';
 import { AddressUtils } from 'src/utils/address.utils';
 import { ApiUtils } from 'src/utils/api.utils';
 import { BinaryUtils } from 'src/utils/binary.utils';
-import { TransactionService } from '../transactions/transaction.service';
 import { TransactionFilter } from '../transactions/entities/transaction.filter';
 import {
+  Dictionary,
   getEpoch,
   getEpochTimePrice,
   getProfile,
@@ -48,9 +48,7 @@ import {
   BytesValue,
 } from '@elrondnetwork/erdjs';
 import { ProviderService } from '../providers/provider.service';
-interface Dictionary<T> {
-  [Key: string]: T;
-}
+import { TransactionService } from '../transactions/transaction.service';
 interface Genesis {
   [Key: string]: GenesisDetails;
 }
