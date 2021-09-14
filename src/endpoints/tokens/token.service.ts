@@ -479,10 +479,11 @@ export class TokenService {
       //   }
       // }
 
-      // let gatewayNftDetails = await this.getNft(nft.collection);
-      // if (gatewayNftDetails) {
-      //   nft.type = gatewayNftDetails.type;
-      // }
+      let gatewayNftDetails = await this.getNft(nft.collection);
+      if (gatewayNftDetails) {
+        nft.type = gatewayNftDetails.type;
+        nft.name = gatewayNftDetails.name;
+      }
 
       nfts.push(nft);
     }
