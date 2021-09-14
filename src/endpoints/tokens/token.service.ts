@@ -469,15 +469,15 @@ export class TokenService {
       nft.attributes = gatewayNft.attributes;
       nft.balance = gatewayNft.balance;
 
-      if (gatewayNft.attributes) {
-        nft.tags = this.nftExtendedAttributesService.getTags(gatewayNft.attributes);
-        try {
-          nft.metadata = await this.nftExtendedAttributesService.getExtendedAttributesFromRawAttributes(gatewayNft.attributes);
-        } catch (error) {
-          this.logger.error(`Could not get extended attributes for nft '${nft.identifier}'`);
-          this.logger.error(error);
-        }
-      }
+      // if (gatewayNft.attributes) {
+      //   nft.tags = this.nftExtendedAttributesService.getTags(gatewayNft.attributes);
+      //   try {
+      //     nft.metadata = await this.nftExtendedAttributesService.getExtendedAttributesFromRawAttributes(gatewayNft.attributes);
+      //   } catch (error) {
+      //     this.logger.error(`Could not get extended attributes for nft '${nft.identifier}'`);
+      //     this.logger.error(error);
+      //   }
+      // }
 
       let gatewayNftDetails = await this.getNft(nft.collection);
       if (gatewayNftDetails) {
@@ -516,7 +516,7 @@ export class TokenService {
       nfts = nfts.filter(x => x.uris.length === 0);
     }
 
-    await this.nftThumbnailService.updateThumbnailUrlForNfts(nfts);
+    // await this.nftThumbnailService.updateThumbnailUrlForNfts(nfts);
 
     return nfts;
   }
