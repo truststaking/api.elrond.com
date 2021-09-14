@@ -407,15 +407,15 @@ export class TokenService {
 
     nfts = nfts.splice(from, from + size);
 
-    let identifiers = nfts.map(x => x.identifier);
-    let elasticNfts = await this.elasticService.getTokensByIdentifiers(identifiers);
+    // let identifiers = nfts.map(x => x.identifier);
+    // let elasticNfts = await this.elasticService.getTokensByIdentifiers(identifiers);
 
-    for (let nft of nfts) {
-      let elasticNft = elasticNfts.find((x: any) => x.identifier === nft.identifier);
-      if (elasticNft) {
-        nft.timestamp = elasticNft.timestamp;
-      }
-    }
+    // for (let nft of nfts) {
+    //   let elasticNft = elasticNfts.find((x: any) => x.identifier === nft.identifier);
+    //   if (elasticNft) {
+    //     nft.timestamp = elasticNft.timestamp;
+    //   }
+    // }
 
     return nfts;
   }
