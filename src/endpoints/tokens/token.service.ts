@@ -309,9 +309,9 @@ export class TokenService {
 
     tokens = tokens.slice(from, from + size);
 
-    for (let token of tokens) {
-      token.assets = await this.tokenAssetService.getAssets(token.identifier);
-    }
+    // for (let token of tokens) {
+    //   token.assets = await this.tokenAssetService.getAssets(token.identifier);
+    // }
 
     return tokens.map(token => ApiUtils.mergeObjects(new TokenWithBalance(), token));
   }
