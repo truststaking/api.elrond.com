@@ -17,7 +17,7 @@ import { BinaryUtils } from "src/utils/binary.utils";
 export class CachingService {
   private client = createClient(6379, this.configService.getRedisUrl());
   private asyncSet = promisify(this.client.set).bind(this.client);
-  private asyncGet = promisify(this.client.get).bind(this.client);
+  // private asyncGet = promisify(this.client.get).bind(this.client);
   private asyncFlushDb = promisify(this.client.flushdb).bind(this.client);
   // private asyncMSet = promisify(this.client.mset).bind(this.client);
   private asyncMGet = promisify(this.client.mget).bind(this.client);
@@ -117,35 +117,37 @@ export class CachingService {
 
   pendingGetRemotes: { [key: string]: Promise<any> } = {};
 
-  public async getCacheRemote<T>(key: string): Promise<T | undefined> {
-    let response;
+  public async getCacheRemote<T>(_: string): Promise<T | undefined> {
+    // let response;
 
-    let pendingGetRemote = this.pendingGetRemotes[key];
-    if (pendingGetRemote) {
-      response = await pendingGetRemote;
-    } else {
-      pendingGetRemote = this.asyncGet(key);
+    // let pendingGetRemote = this.pendingGetRemotes[key];
+    // if (pendingGetRemote) {
+    //   response = await pendingGetRemote;
+    // } else {
+    //   pendingGetRemote = this.asyncGet(key);
 
-      this.pendingGetRemotes[key] = pendingGetRemote;
+    //   this.pendingGetRemotes[key] = pendingGetRemote;
 
-      response = await pendingGetRemote;
+    //   response = await pendingGetRemote;
 
-      delete this.pendingGetRemotes[key];
-    }
+    //   delete this.pendingGetRemotes[key];
+    // }
 
-    if (response === undefined) {
-      return undefined;
-    }
+    // if (response === undefined) {
+    //   return undefined;
+    // }
 
-    return JSON.parse(response);
+    // return JSON.parse(response);
+    return undefined;
   };
 
   async setCacheLocal<T>(key: string, value: T, ttl: number = this.configService.getCacheTtl()): Promise<T> {
     return await CachingService.cache.set<T>(key, value, { ttl });
   }
 
-  async getCacheLocal<T>(key: string): Promise<T | undefined> {
-    return await CachingService.cache.get<T>(key);
+  async getCacheLocal<T>(_: string): Promise<T | undefined> {
+    // return await CachingService.cache.get<T>(key);
+    return undefined;
   }
 
   public async getCache<T>(key: string): Promise<T | undefined> {
