@@ -134,6 +134,100 @@ export class TransactionService {
     removeDuplicate(transactions);
     return transactions;
   }
+
+  private async getFullHistory(address: string, filter: TransactionFilter): Promise<any> {
+    
+    var send_fitler = {
+      ...filter
+    };
+
+    if (!filter.sender){
+      send_fitler.sender = address;
+    }
+    
+    var tmp_getSendTransactions = await this.getTransactions({
+      ...send_fitler,
+      status: TransactionStatus.success,
+    });
+    var getSendTransactions = [
+      ...tmp_getSendTransactions
+    ];
+    if (tmp_getSendTransactions.length > 0) {
+
+      send_fitler.before = tmp_getSendTransactions[tmp_getSendTransactions.length - 1].timestamp + 1;
+  
+      tmp_getSendTransactions = await this.getTransactions({
+        ...send_fitler,
+        status: TransactionStatus.success,
+      });
+      while (tmp_getSendTransactions.length != 1 
+          || tmp_getSendTransactions[tmp_getSendTransactions.length - 1].txHash != getSendTransactions[getSendTransactions.length - 1].txHash)  {
+        getSendTransactions = [
+          ...getSendTransactions,
+          ...tmp_getSendTransactions,
+        ];
+
+        send_fitler.before = tmp_getSendTransactions[tmp_getSendTransactions.length - 1].timestamp + 1;
+        tmp_getSendTransactions = await this.getTransactions({
+          ...send_fitler,
+          status: TransactionStatus.success,
+        });
+      };
+    }
+
+    var receive_fitler = {
+      ...filter
+    };
+    if (!filter.receiver){
+      receive_fitler.receiver = address;
+    }
+
+    var tmp_getReceiveTransactions = await this.getTransactions({
+      ...receive_fitler,
+      status: TransactionStatus.success,
+    });
+    var getReceiveTransactions = [
+      ...tmp_getReceiveTransactions
+    ];
+    if (tmp_getReceiveTransactions.length > 0) {
+      receive_fitler.before = tmp_getReceiveTransactions[tmp_getReceiveTransactions.length - 1].timestamp + 1;
+  
+      var tmp_getReceiveTransactions = await this.getTransactions({
+        ...receive_fitler,
+        status: TransactionStatus.success,
+      });
+      while (tmp_getReceiveTransactions.length != 1 
+        || tmp_getReceiveTransactions[tmp_getReceiveTransactions.length - 1].txHash != getReceiveTransactions[getReceiveTransactions.length - 1].txHash) {
+        
+        getReceiveTransactions = [
+          ...getReceiveTransactions,
+          ...tmp_getReceiveTransactions,
+        ];
+
+        receive_fitler.before = tmp_getReceiveTransactions[tmp_getReceiveTransactions.length - 1].timestamp + 1;
+  
+        var tmp_getReceiveTransactions = await this.getTransactions({
+          ...receive_fitler,
+          status: TransactionStatus.success,
+        });
+      };
+    }
+    
+    
+    const transactions: TransactionHistory[] = [
+      ...getSendTransactions,
+      ...getReceiveTransactions,
+    ];
+    transactions.sort(function (
+      a: { timestamp: number },
+      b: { timestamp: number },
+    ) {
+      return a.timestamp - b.timestamp;
+    });
+    removeDuplicate(transactions);
+    return transactions;
+  }
+
   async getTransactions(
     filter: TransactionFilter,
   ): Promise<TransactionLabeled[]> {

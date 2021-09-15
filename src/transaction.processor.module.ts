@@ -9,6 +9,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import configuration from 'config/configuration';
 import { ApiConfigService } from './common/api.config.service';
 import { TransactionProcessorService } from './crons/transaction.processor.service';
+import { ElrondTaxService } from './crons/elrondtax.service';
 import { PublicAppModule } from './public.app.module';
 import { EventsGateway } from './websockets/events.gateway';
 
@@ -23,6 +24,7 @@ import { EventsGateway } from './websockets/events.gateway';
   controllers: [],
   providers: [
     TransactionProcessorService,
+    ElrondTaxService,
     EventsGateway,
     {
       provide: 'PUBSUB_SERVICE',
