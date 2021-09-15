@@ -1,9 +1,9 @@
-import { Test } from "@nestjs/testing";
-import { Shard } from "src/endpoints/shards/entities/shard";
-import { ShardService } from "src/endpoints/shards/shard.service";
-import { PublicAppModule } from "src/public.app.module";
-import { Constants } from "src/utils/constants";
-import Initializer from "./e2e-init";
+import { Test } from '@nestjs/testing';
+import { Shard } from 'src/endpoints/shards/entities/shard';
+import { ShardService } from 'src/endpoints/shards/shard.service';
+import { PublicAppModule } from 'src/public.app.module';
+import { Constants } from 'src/utils/constants';
+import Initializer from './e2e-init';
 
 describe('Shard Service', () => {
   let shardService: ShardService;
@@ -30,7 +30,7 @@ describe('Shard Service', () => {
         expect(shard).toHaveProperty('activeValidators');
       }
     });
-    
+
     it('all entities should have shard structure', async () => {
       for (let shard of shards) {
         expect(shard).toHaveStructure(Object.keys(new Shard()));

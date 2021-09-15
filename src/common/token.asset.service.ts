@@ -1,10 +1,10 @@
-import { Injectable, Logger } from "@nestjs/common";
-import simpleGit, {SimpleGit, SimpleGitOptions} from 'simple-git';
-import { TokenAssets } from "src/endpoints/tokens/entities/token.assets";
-import { FileUtils } from "src/utils/file.utils";
-import { ApiConfigService } from "./api.config.service";
-import { CachingService } from "./caching.service";
-const rimraf = require("rimraf");
+import { Injectable, Logger } from '@nestjs/common';
+import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
+import { TokenAssets } from 'src/endpoints/tokens/entities/token.assets';
+import { FileUtils } from 'src/utils/file.utils';
+import { ApiConfigService } from './api.config.service';
+import { CachingService } from './caching.service';
+const rimraf = require('rimraf');
 const path = require('path');
 const fs = require('fs');
 
@@ -14,7 +14,7 @@ export class TokenAssetService {
 
   constructor(
     private readonly cachingService: CachingService,
-    private readonly apiConfigService: ApiConfigService
+    private readonly apiConfigService: ApiConfigService,
   ) {
     this.logger = new Logger(TokenAssetService.name);
   }
@@ -22,31 +22,36 @@ export class TokenAssetService {
   async checkout() {
     const localGitPath = 'dist/repos/assets';
     let logger = this.logger;
-    rimraf(localGitPath, function () { 
-      logger.log("done deleting"); 
+    rimraf(localGitPath, function () {
+      logger.log('done deleting');
 
       const options: Partial<SimpleGitOptions> = {
         baseDir: process.cwd(),
         binary: 'git',
         maxConcurrentProcesses: 6,
       };
-      
+
       // when setting all options in a single object
       const git: SimpleGit = simpleGit(options);
 
-      git.outputHandler((_, stdout, stderr) => {
-        stdout.pipe(process.stdout);
-        stderr.pipe(process.stderr)
+      git
+        .outputHandler((_, stdout, stderr) => {
+          stdout.pipe(process.stdout);
+          stderr.pipe(process.stderr);
 
-        stdout.on('data', (data) => {
+          stdout.on('data', (data) => {
             // Print data
             logger.log(data.toString('utf8'));
+          });
         })
-      }).clone('https://github.com/ElrondNetwork/assets.git', localGitPath);
+        .clone('https://github.com/ElrondNetwork/assets.git', localGitPath);
     });
   }
 
-  private readAssetDetails(tokenIdentifier: string, assetPath: string): TokenAssets {
+  private readAssetDetails(
+    tokenIdentifier: string,
+    assetPath: string,
+  ): TokenAssets {
     let jsonPath = path.join(assetPath, 'info.json');
     let jsonContents = fs.readFileSync(jsonPath);
     let json = JSON.parse(jsonContents);
@@ -65,7 +70,11 @@ export class TokenAssetService {
   }
 
   private getTokensPath() {
-    return path.join(process.cwd(), 'dist/repos/assets', this.getTokensRelativePath());
+    return path.join(
+      process.cwd(),
+      'dist/repos/assets',
+      this.getTokensRelativePath(),
+    );
   }
 
   private getTokensRelativePath() {
@@ -83,14 +92,17 @@ export class TokenAssetService {
     if (!fs.existsSync(tokensPath)) {
       return await this.cachingService.setCacheLocal('tokenAssets', {});
     }
-    
+
     let tokenIdentifiers = FileUtils.getDirectories(tokensPath);
-    
+
     // for every folder, create a TokenAssets entity with the contents of info.json and the urls from github
     let assets: { [key: string]: TokenAssets } = {};
     for (let tokenIdentifier of tokenIdentifiers) {
       let tokenPath = path.join(tokensPath, tokenIdentifier);
-      assets[tokenIdentifier] = this.readAssetDetails(tokenIdentifier, tokenPath);
+      assets[tokenIdentifier] = this.readAssetDetails(
+        tokenIdentifier,
+        tokenPath,
+      );
     }
 
     // create a dictionary with the being the token identifier and the value the TokenAssets entity and store it in the cache
@@ -98,7 +110,9 @@ export class TokenAssetService {
   }
 
   private async getOrReadAssets() {
-    let assets = await this.cachingService.getCacheLocal<{ [key: string] : TokenAssets }>('tokenAssets');
+    let assets = await this.cachingService.getCacheLocal<{
+      [key: string]: TokenAssets;
+    }>('tokenAssets');
     if (!assets) {
       assets = await this.readAssets();
     }

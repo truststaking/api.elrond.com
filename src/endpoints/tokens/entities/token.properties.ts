@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { NftType } from "./nft.type";
+import { ApiProperty } from '@nestjs/swagger';
+import { NftType } from './nft.type';
 
 export class TokenProperties {
   @ApiProperty()
@@ -58,16 +58,16 @@ export class TokenProperties {
 
   @ApiProperty()
   canFreeze: boolean = false;
-  
+
   @ApiProperty()
   canWipe: boolean = false;
-  
+
   @ApiProperty()
   canAddSpecialRoles: boolean = false;
-  
+
   @ApiProperty()
   canTransferNFTCreateRole: boolean = false;
-  
+
   @ApiProperty()
   NFTCreateStopped: boolean = false;
 }

@@ -1,35 +1,35 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ApiConfigService } from "src/common/api.config.service";
-import { CachingService } from "src/common/caching.service";
-import { GatewayService } from "src/common/gateway.service";
-import { VmQueryService } from "src/endpoints/vm.query/vm.query.service";
-import { Token } from "./entities/token";
-import { TokenWithBalance } from "./entities/token.with.balance";
-import { TokenDetailed } from "./entities/token.detailed";
-import { TokenProperties } from "./entities/token.properties";
-import { NftType } from "./entities/nft.type";
-import { ElasticService } from "src/common/elastic.service";
-import { Nft } from "./entities/nft";
-import { NftDetailed } from "./entities/nft.detailed";
-import { NftOwner } from "./entities/nft.owner";
-import { NftAccount } from "./entities/nft.account";
-import { TokenAssetService } from "src/common/token.asset.service";
-import { NftCollection } from "./entities/nft.collection";
-import { NftFilter } from "./entities/nft.filter";
-import { QueryPagination } from "src/common/entities/query.pagination";
-import { CollectionFilter } from "./entities/collection.filter";
-import { Constants } from "src/utils/constants";
-import { AddressUtils } from "src/utils/address.utils";
-import { BinaryUtils } from "src/utils/binary.utils";
-import { ApiUtils } from "src/utils/api.utils";
-import { TokenFilter } from "./entities/token.filter";
-import { TokenUtils } from "src/utils/tokens.utils";
-import { NftThumbnailService } from "src/common/nft.thumbnail.service";
-import { NftExtendedAttributesService } from "src/common/nft.extendedattributes.service";
+import { Injectable, Logger } from '@nestjs/common';
+import { ApiConfigService } from 'src/common/api.config.service';
+import { CachingService } from 'src/common/caching.service';
+import { GatewayService } from 'src/common/gateway.service';
+import { VmQueryService } from 'src/endpoints/vm.query/vm.query.service';
+import { Token } from './entities/token';
+import { TokenWithBalance } from './entities/token.with.balance';
+import { TokenDetailed } from './entities/token.detailed';
+import { TokenProperties } from './entities/token.properties';
+import { NftType } from './entities/nft.type';
+import { ElasticService } from 'src/common/elastic.service';
+import { Nft } from './entities/nft';
+import { NftDetailed } from './entities/nft.detailed';
+import { NftOwner } from './entities/nft.owner';
+import { NftAccount } from './entities/nft.account';
+import { TokenAssetService } from 'src/common/token.asset.service';
+import { NftCollection } from './entities/nft.collection';
+import { NftFilter } from './entities/nft.filter';
+import { QueryPagination } from 'src/common/entities/query.pagination';
+import { CollectionFilter } from './entities/collection.filter';
+import { Constants } from 'src/utils/constants';
+import { AddressUtils } from 'src/utils/address.utils';
+import { BinaryUtils } from 'src/utils/binary.utils';
+import { ApiUtils } from 'src/utils/api.utils';
+import { TokenFilter } from './entities/token.filter';
+import { TokenUtils } from 'src/utils/tokens.utils';
+import { NftThumbnailService } from 'src/common/nft.thumbnail.service';
+import { NftExtendedAttributesService } from 'src/common/nft.extendedattributes.service';
 
 @Injectable()
 export class TokenService {
-  private readonly logger: Logger
+  private readonly logger: Logger;
   private readonly NFT_THUMBNAIL_PREFIX: string;
 
   constructor(
@@ -43,12 +43,13 @@ export class TokenService {
     private readonly nftExtendedAttributesService: NftExtendedAttributesService,
   ) {
     this.logger = new Logger(TokenService.name);
-    this.NFT_THUMBNAIL_PREFIX = this.apiConfigService.getMediaUrl() + '/nfts/asset';
+    this.NFT_THUMBNAIL_PREFIX =
+      this.apiConfigService.getMediaUrl() + '/nfts/asset';
   }
 
   async getToken(identifier: string): Promise<TokenDetailed | undefined> {
     let tokens = await this.getAllTokens();
-    let token = tokens.find(x => x.identifier === identifier);
+    let token = tokens.find((x) => x.identifier === identifier);
     if (token) {
       token.assets = await this.tokenAssetService.getAssets(token.identifier);
 
@@ -58,7 +59,10 @@ export class TokenService {
     return undefined;
   }
 
-  async getTokens(queryPagination: QueryPagination, filter: TokenFilter): Promise<TokenDetailed[]> {
+  async getTokens(
+    queryPagination: QueryPagination,
+    filter: TokenFilter,
+  ): Promise<TokenDetailed[]> {
     const { from, size } = queryPagination;
 
     let tokens = await this.getFilteredTokens(filter);
@@ -69,7 +73,9 @@ export class TokenService {
       token.assets = await this.tokenAssetService.getAssets(token.identifier);
     }
 
-    return tokens.map(item => ApiUtils.mergeObjects(new TokenDetailed(), item));
+    return tokens.map((item) =>
+      ApiUtils.mergeObjects(new TokenDetailed(), item),
+    );
   }
 
   async getFilteredTokens(filter: TokenFilter): Promise<TokenDetailed[]> {
@@ -78,21 +84,29 @@ export class TokenService {
     if (filter.search) {
       let searchLower = filter.search.toLowerCase();
 
-      tokens = tokens.filter(token => token.name.toLowerCase().includes(searchLower) || token.identifier.toLowerCase().includes(searchLower));
+      tokens = tokens.filter(
+        (token) =>
+          token.name.toLowerCase().includes(searchLower) ||
+          token.identifier.toLowerCase().includes(searchLower),
+      );
     }
 
     if (filter.name) {
       let nameLower = filter.name.toLowerCase();
 
-      tokens = tokens.filter(token => token.name.toLowerCase().includes(nameLower));
+      tokens = tokens.filter((token) =>
+        token.name.toLowerCase().includes(nameLower),
+      );
     }
 
     if (filter.identifier) {
       let identifierLower = filter.identifier.toLowerCase();
 
-      tokens = tokens.filter(token => token.identifier.toLowerCase().includes(identifierLower));
+      tokens = tokens.filter((token) =>
+        token.identifier.toLowerCase().includes(identifierLower),
+      );
     }
-    
+
     return tokens;
   }
 
@@ -107,7 +121,7 @@ export class TokenService {
       `nft:${identifier}`,
       async () => await this.getTokenProperties(identifier),
       Constants.oneWeek(),
-      Constants.oneDay()
+      Constants.oneDay(),
     );
 
     if (!properties) {
@@ -117,10 +131,21 @@ export class TokenService {
     return ApiUtils.mergeObjects(new TokenProperties(), properties);
   }
 
-  async getNftCollections(queryPagination: QueryPagination, filter: CollectionFilter): Promise<NftCollection[]> {
+  async getNftCollections(
+    queryPagination: QueryPagination,
+    filter: CollectionFilter,
+  ): Promise<NftCollection[]> {
     const { from, size } = queryPagination;
 
-    let tokenCollections = await this.elasticService.getTokenCollections(from, size, filter.search, filter.type, undefined, filter.issuer, filter.identifiers);
+    let tokenCollections = await this.elasticService.getTokenCollections(
+      from,
+      size,
+      filter.search,
+      filter.type,
+      undefined,
+      filter.issuer,
+      filter.identifiers,
+    );
 
     let nftCollections: NftCollection[] = [];
     for (let tokenCollection of tokenCollections) {
@@ -146,8 +171,18 @@ export class TokenService {
     return await this.elasticService.getTokenCollectionCount(search, type);
   }
 
-  async getNftCollection(collection: string): Promise<NftCollection | undefined> {
-    let tokenCollections = await this.elasticService.getTokenCollections(0, 1, undefined, undefined, collection, undefined, []);
+  async getNftCollection(
+    collection: string,
+  ): Promise<NftCollection | undefined> {
+    let tokenCollections = await this.elasticService.getTokenCollections(
+      0,
+      1,
+      undefined,
+      undefined,
+      collection,
+      undefined,
+      [],
+    );
     if (tokenCollections.length === 0) {
       return undefined;
     }
@@ -166,29 +201,42 @@ export class TokenService {
     return nftCollection;
   }
 
-  async getNfts(queryPagination: QueryPagination, filter: NftFilter, withOwner: boolean = false): Promise<Nft[] | NftDetailed[]> {
-    const  { from, size } = queryPagination;
+  async getNfts(
+    queryPagination: QueryPagination,
+    filter: NftFilter,
+    withOwner: boolean = false,
+  ): Promise<Nft[] | NftDetailed[]> {
+    const { from, size } = queryPagination;
 
-    let nfts =  await this.getNftsInternal(from, size, filter, undefined);
+    let nfts = await this.getNftsInternal(from, size, filter, undefined);
 
     if (withOwner) {
-      let accountsEsdts = await this.elasticService.getAccountEsdtByIdentifiers(nfts.map(({identifier}) => identifier));
-      
+      let accountsEsdts = await this.elasticService.getAccountEsdtByIdentifiers(
+        nfts.map(({ identifier }) => identifier),
+      );
+
       for (let nft of nfts) {
         if (nft.type === NftType.NonFungibleESDT) {
-          const accountEsdt = accountsEsdts.find((accountEsdt: any) => accountEsdt.identifier == nft.identifier);
+          const accountEsdt = accountsEsdts.find(
+            (accountEsdt: any) => accountEsdt.identifier == nft.identifier,
+          );
           if (accountEsdt) {
             nft.owner = accountEsdt.address;
           }
         }
       }
     }
-    
+
     return nfts;
   }
 
-  private async getTokenDistribution(identifier: string, nftDetailed: NftDetailed): Promise<NftDetailed> {
-    let accountsEsdt = await this.elasticService.getAccountEsdtByIdentifier(identifier);
+  private async getTokenDistribution(
+    identifier: string,
+    nftDetailed: NftDetailed,
+  ): Promise<NftDetailed> {
+    let accountsEsdt = await this.elasticService.getAccountEsdtByIdentifier(
+      identifier,
+    );
     if (nftDetailed.type === NftType.NonFungibleESDT) {
       nftDetailed.owner = accountsEsdt[0].address;
 
@@ -227,8 +275,18 @@ export class TokenService {
     return nft;
   }
 
-  async getNftsInternal(from: number, size: number, filter: NftFilter, identifier: string | undefined): Promise<Nft[]> {
-    let elasticNfts = await this.elasticService.getTokens(from, size, filter, identifier);
+  async getNftsInternal(
+    from: number,
+    size: number,
+    filter: NftFilter,
+    identifier: string | undefined,
+  ): Promise<Nft[]> {
+    let elasticNfts = await this.elasticService.getTokens(
+      from,
+      size,
+      filter,
+      identifier,
+    );
 
     let nfts: Nft[] = [];
 
@@ -257,7 +315,10 @@ export class TokenService {
 
         if (nft.uris && nft.uris.length > 0) {
           try {
-            nft.url = TokenUtils.computeNftUri(nft.url, this.NFT_THUMBNAIL_PREFIX);
+            nft.url = TokenUtils.computeNftUri(
+              nft.url,
+              this.NFT_THUMBNAIL_PREFIX,
+            );
           } catch (error) {
             this.logger.error(error);
           }
@@ -265,9 +326,14 @@ export class TokenService {
 
         if (elasticNftData.metadata) {
           try {
-            nft.metadata = await this.nftExtendedAttributesService.getExtendedAttributesFromMetadata(elasticNftData.metadata);
+            nft.metadata =
+              await this.nftExtendedAttributesService.getExtendedAttributesFromMetadata(
+                elasticNftData.metadata,
+              );
           } catch (error) {
-            this.logger.error(`Error when getting extended attributes for NFT '${nft.identifier}'`);
+            this.logger.error(
+              `Error when getting extended attributes for NFT '${nft.identifier}'`,
+            );
             this.logger.error(error);
             nft.metadata = undefined;
           }
@@ -302,9 +368,12 @@ export class TokenService {
     return tokens.length;
   }
 
-  async getTokensForAddress(address: string, queryPagination: QueryPagination): Promise<TokenWithBalance[]> {
+  async getTokensForAddress(
+    address: string,
+    queryPagination: QueryPagination,
+  ): Promise<TokenWithBalance[]> {
     const { from, size } = queryPagination;
-    
+
     let tokens = await this.getAllTokensForAddress(address);
 
     tokens = tokens.slice(from, from + size);
@@ -313,11 +382,18 @@ export class TokenService {
       token.assets = await this.tokenAssetService.getAssets(token.identifier);
     }
 
-    return tokens.map(token => ApiUtils.mergeObjects(new TokenWithBalance(), token));
+    return tokens.map((token) =>
+      ApiUtils.mergeObjects(new TokenWithBalance(), token),
+    );
   }
 
-  async getCollectionsForAddress(address: string, queryPagination: QueryPagination): Promise<NftCollection[]> {
-    let esdtResult = await this.gatewayService.get(`address/${address}/registered-nfts`);
+  async getCollectionsForAddress(
+    address: string,
+    queryPagination: QueryPagination,
+  ): Promise<NftCollection[]> {
+    let esdtResult = await this.gatewayService.get(
+      `address/${address}/registered-nfts`,
+    );
 
     if (esdtResult.tokens.length === 0) {
       return [];
@@ -330,15 +406,20 @@ export class TokenService {
   }
 
   async getCollectionCountForAddress(address: string): Promise<number> {
-    let esdtResult = await this.gatewayService.get(`address/${address}/registered-nfts`);
+    let esdtResult = await this.gatewayService.get(
+      `address/${address}/registered-nfts`,
+    );
 
     return esdtResult.tokens.length;
   }
 
-  async getTokenForAddress(address: string, tokenIdentifier: string): Promise<TokenWithBalance | undefined> {
+  async getTokenForAddress(
+    address: string,
+    tokenIdentifier: string,
+  ): Promise<TokenWithBalance | undefined> {
     let allTokens = await this.getAllTokensForAddress(address);
 
-    let foundToken = allTokens.find(x => x.identifier === tokenIdentifier);
+    let foundToken = allTokens.find((x) => x.identifier === tokenIdentifier);
     if (!foundToken) {
       return undefined;
     }
@@ -364,7 +445,7 @@ export class TokenService {
       if (errorMessage && errorMessage.includes('account was not found')) {
         return [];
       }
-      
+
       throw error;
     }
 
@@ -378,7 +459,9 @@ export class TokenService {
       let esdt = esdtResult.esdts[tokenIdentifier];
       let token = tokensIndexed[tokenIdentifier];
       if (!token) {
-        this.logger.log(`Could not find token with identifier ${tokenIdentifier}`);
+        this.logger.log(
+          `Could not find token with identifier ${tokenIdentifier}`,
+        );
         continue;
       }
 
@@ -400,18 +483,26 @@ export class TokenService {
     return tokensWithBalance;
   }
 
-  async getNftsForAddress(address: string, queryPagination: QueryPagination, filter: NftFilter): Promise<NftAccount[]> {
-    const { from, size }  = queryPagination;
+  async getNftsForAddress(
+    address: string,
+    queryPagination: QueryPagination,
+    filter: NftFilter,
+  ): Promise<NftAccount[]> {
+    const { from, size } = queryPagination;
 
     let nfts = await this.getNftsForAddressInternal(address, filter);
 
     nfts = nfts.splice(from, from + size);
 
-    let identifiers = nfts.map(x => x.identifier);
-    let elasticNfts = await this.elasticService.getTokensByIdentifiers(identifiers);
+    let identifiers = nfts.map((x) => x.identifier);
+    let elasticNfts = await this.elasticService.getTokensByIdentifiers(
+      identifiers,
+    );
 
     for (let nft of nfts) {
-      let elasticNft = elasticNfts.find((x: any) => x.identifier === nft.identifier);
+      let elasticNft = elasticNfts.find(
+        (x: any) => x.identifier === nft.identifier,
+      );
       if (elasticNft) {
         nft.timestamp = elasticNft.timestamp;
       }
@@ -420,16 +511,24 @@ export class TokenService {
     return nfts;
   }
 
-  async getNftCountForAddress(address: string, filter: NftFilter): Promise<number> {
+  async getNftCountForAddress(
+    address: string,
+    filter: NftFilter,
+  ): Promise<number> {
     let nfts = await this.getNftsForAddressInternal(address, filter);
 
     return nfts.length;
   }
 
-  async getNftsForAddressInternal(address: string, filter: NftFilter): Promise<NftAccount[]> {
+  async getNftsForAddressInternal(
+    address: string,
+    filter: NftFilter,
+  ): Promise<NftAccount[]> {
     let gatewayNftResult: any;
     try {
-      gatewayNftResult = await this.gatewayService.get(`address/${address}/esdt`);
+      gatewayNftResult = await this.gatewayService.get(
+        `address/${address}/esdt`,
+      );
     } catch (error) {
       let errorMessage = error?.response?.data?.error;
       if (errorMessage && errorMessage.includes('account was not found')) {
@@ -439,7 +538,9 @@ export class TokenService {
       throw error;
     }
 
-    let gatewayNfts = Object.values(gatewayNftResult['esdts']).map(x => x as any);
+    let gatewayNfts = Object.values(gatewayNftResult['esdts']).map(
+      (x) => x as any,
+    );
 
     let nfts: NftAccount[] = [];
 
@@ -451,7 +552,10 @@ export class TokenService {
 
       let nft = new NftAccount();
       nft.identifier = gatewayNft.tokenIdentifier;
-      nft.collection = gatewayNft.tokenIdentifier.split('-').slice(0, 2).join('-');
+      nft.collection = gatewayNft.tokenIdentifier
+        .split('-')
+        .slice(0, 2)
+        .join('-');
       nft.nonce = parseInt('0x' + gatewayNft.tokenIdentifier.split('-')[2]);
       nft.creator = gatewayNft.creator;
       nft.royalties = Number(gatewayNft.royalties) / 100; // 10.000 => 100%
@@ -460,7 +564,10 @@ export class TokenService {
 
       if (nft.uris && nft.uris.length > 0) {
         try {
-          nft.url = TokenUtils.computeNftUri(BinaryUtils.base64Decode(nft.uris[0]), this.NFT_THUMBNAIL_PREFIX);
+          nft.url = TokenUtils.computeNftUri(
+            BinaryUtils.base64Decode(nft.uris[0]),
+            this.NFT_THUMBNAIL_PREFIX,
+          );
         } catch (error) {
           this.logger.error(error);
         }
@@ -470,11 +577,18 @@ export class TokenService {
       nft.balance = gatewayNft.balance;
 
       if (gatewayNft.attributes) {
-        nft.tags = this.nftExtendedAttributesService.getTags(gatewayNft.attributes);
+        nft.tags = this.nftExtendedAttributesService.getTags(
+          gatewayNft.attributes,
+        );
         try {
-          nft.metadata = await this.nftExtendedAttributesService.getExtendedAttributesFromRawAttributes(gatewayNft.attributes);
+          nft.metadata =
+            await this.nftExtendedAttributesService.getExtendedAttributesFromRawAttributes(
+              gatewayNft.attributes,
+            );
         } catch (error) {
-          this.logger.error(`Could not get extended attributes for nft '${nft.identifier}'`);
+          this.logger.error(
+            `Could not get extended attributes for nft '${nft.identifier}'`,
+          );
           this.logger.error(error);
         }
       }
@@ -490,30 +604,34 @@ export class TokenService {
     if (filter.search) {
       let searchLower = filter.search.toLowerCase();
 
-      nfts = nfts.filter(x => x.name.toLowerCase().includes(searchLower));
+      nfts = nfts.filter((x) => x.name.toLowerCase().includes(searchLower));
     }
 
     if (filter.type) {
-      nfts = nfts.filter(x => x.type === filter.type);
+      nfts = nfts.filter((x) => x.type === filter.type);
     }
 
     if (filter.collection) {
-      nfts = nfts.filter(x => x.collection === filter.collection);
+      nfts = nfts.filter((x) => x.collection === filter.collection);
     }
 
     if (filter.tags) {
       let tagsArray = filter.tags.split(',');
-      nfts = nfts.filter(nft => tagsArray.filter(tag => nft.tags.includes(tag)).length === tagsArray.length);
+      nfts = nfts.filter(
+        (nft) =>
+          tagsArray.filter((tag) => nft.tags.includes(tag)).length ===
+          tagsArray.length,
+      );
     }
 
     if (filter.creator) {
-      nfts = nfts.filter(x => x.creator === filter.creator);
+      nfts = nfts.filter((x) => x.creator === filter.creator);
     }
 
     if (filter.hasUris === true) {
-      nfts = nfts.filter(x => x.uris.length > 0);
+      nfts = nfts.filter((x) => x.uris.length > 0);
     } else if (filter.hasUris === false) {
-      nfts = nfts.filter(x => x.uris.length === 0);
+      nfts = nfts.filter((x) => x.uris.length === 0);
     }
 
     await this.nftThumbnailService.updateThumbnailUrlForNfts(nfts);
@@ -521,23 +639,28 @@ export class TokenService {
     return nfts;
   }
 
-  async getNftForAddress(address: string, identifier: string): Promise<NftAccount | undefined> {
+  async getNftForAddress(
+    address: string,
+    identifier: string,
+  ): Promise<NftAccount | undefined> {
     let nfts = await this.getNftsForAddressInternal(address, new NftFilter());
-    return nfts.find(x => x.identifier === identifier);
+    return nfts.find((x) => x.identifier === identifier);
   }
 
   async getAllTokens(): Promise<TokenDetailed[]> {
     return this.cachingService.getOrSetCache(
       'allTokens',
       async () => await this.getAllTokensRaw(),
-      Constants.oneHour()
+      Constants.oneHour(),
     );
   }
 
   async getAllTokensRaw(): Promise<TokenDetailed[]> {
     let tokensIdentifiers: string[];
     try {
-      const getFungibleTokensResult = await this.gatewayService.get('network/esdt/fungible-tokens');
+      const getFungibleTokensResult = await this.gatewayService.get(
+        'network/esdt/fungible-tokens',
+      );
 
       tokensIdentifiers = getFungibleTokensResult.tokens;
     } catch (error) {
@@ -548,9 +671,9 @@ export class TokenService {
 
     let tokens = await this.cachingService.batchProcess(
       tokensIdentifiers,
-      token => `tokenProperties:${token}`,
+      (token) => `tokenProperties:${token}`,
       async (token: string) => await this.getTokenProperties(token),
-      Constants.oneDay()
+      Constants.oneDay(),
     );
 
     // @ts-ignore
@@ -564,12 +687,12 @@ export class TokenService {
       this.apiConfigService.getEsdtContractAddress(),
       'getTokenProperties',
       undefined,
-      [ arg ],
-      true
+      [arg],
+      true,
     );
 
     const tokenProperties = tokenPropertiesEncoded.map((encoded, index) =>
-      Buffer.from(encoded, 'base64').toString(index === 2 ? 'hex' : undefined)
+      Buffer.from(encoded, 'base64').toString(index === 2 ? 'hex' : undefined),
     );
 
     const [
@@ -626,5 +749,5 @@ export class TokenService {
     }
 
     return tokenProps;
-  };
+  }
 }

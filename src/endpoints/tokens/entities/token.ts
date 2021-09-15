@@ -1,24 +1,24 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger';
 
 export class Token {
-    @ApiProperty()
-    identifier: string = '';
+  @ApiProperty()
+  identifier: string = '';
 
-    @ApiProperty()
-    name: string = '';
+  @ApiProperty()
+  name: string = '';
 
-    @ApiProperty()
-    owner: string = '';
+  @ApiProperty()
+  owner: string = '';
 
-    @ApiProperty()
-    minted: string = '';
+  @ApiProperty()
+  minted: string = '';
 
-    @ApiProperty()
-    burnt: string = '';
+  @ApiProperty()
+  burnt: string = '';
 
-    @ApiProperty()
-    decimals: number = 0;
+  @ApiProperty()
+  decimals: number = 0;
 
-    @ApiProperty()
-    isPaused: boolean = false;
+  @ApiProperty()
+  isPaused: boolean = false;
 }

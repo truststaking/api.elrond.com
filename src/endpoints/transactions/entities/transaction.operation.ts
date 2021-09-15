@@ -1,5 +1,5 @@
-import { TransactionOperationAction } from "./transaction.operation.action";
-import { TransactionOperationType } from "./transaction.operation.type";
+import { TransactionOperationAction } from './transaction.operation.action';
+import { TransactionOperationType } from './transaction.operation.type';
 
 export class TransactionOperation {
   action: TransactionOperationAction = TransactionOperationAction.none;

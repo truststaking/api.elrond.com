@@ -1,9 +1,9 @@
-import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
-import axios, { AxiosRequestConfig } from "axios";
-import { ApiConfigService } from "./api.config.service";
-import { PerformanceProfiler } from "../utils/performance.profiler";
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import axios, { AxiosRequestConfig } from 'axios';
+import { ApiConfigService } from './api.config.service';
+import { PerformanceProfiler } from '../utils/performance.profiler';
 import Agent from 'agentkeepalive';
-import { MetricsService } from "src/endpoints/metrics/metrics.service";
+import { MetricsService } from 'src/endpoints/metrics/metrics.service';
 
 @Injectable()
 export class ApiService {
@@ -18,8 +18,8 @@ export class ApiService {
   constructor(
     private readonly apiConfigService: ApiConfigService,
     @Inject(forwardRef(() => MetricsService))
-    private readonly metricsService: MetricsService
-  ) {};
+    private readonly metricsService: MetricsService,
+  ) {}
 
   private getConfig(timeout: number | undefined): AxiosRequestConfig {
     timeout = timeout || this.defaultTimeout;
@@ -36,31 +36,35 @@ export class ApiService {
       timeout,
       httpAgent: this.keepaliveAgent,
       headers,
-      transformResponse: [ 
+      transformResponse: [
         (data) => {
           try {
             return JSON.parse(data);
           } catch (error) {
             return data;
           }
-        }  
+        },
       ],
     };
   }
 
-  async get(url: string, timeout: number | undefined = undefined, errorHandler?: (error: any) => Promise<boolean>): Promise<any> {
+  async get(
+    url: string,
+    timeout: number | undefined = undefined,
+    errorHandler?: (error: any) => Promise<boolean>,
+  ): Promise<any> {
     timeout = timeout || this.defaultTimeout;
 
     let profiler = new PerformanceProfiler();
 
     try {
       return await axios.get(url, this.getConfig(timeout));
-    } catch(error) {
+    } catch (error) {
       let handled = false;
       if (errorHandler) {
         handled = await errorHandler(error);
-      } 
-      
+      }
+
       if (!handled) {
         let logger = new Logger(ApiService.name);
         logger.error({
@@ -76,23 +80,31 @@ export class ApiService {
       }
     } finally {
       profiler.stop();
-      this.metricsService.setExternalCall(this.getHostname(url), profiler.duration);
+      this.metricsService.setExternalCall(
+        this.getHostname(url),
+        profiler.duration,
+      );
     }
   }
 
-  async post(url: string, data: any, timeout: number | undefined = undefined, errorHandler?: (error: any) => Promise<boolean>): Promise<any> {
+  async post(
+    url: string,
+    data: any,
+    timeout: number | undefined = undefined,
+    errorHandler?: (error: any) => Promise<boolean>,
+  ): Promise<any> {
     timeout = timeout || this.defaultTimeout;
 
     let profiler = new PerformanceProfiler();
-    
+
     try {
       return await axios.post(url, data, this.getConfig(timeout));
-    } catch(error) {
+    } catch (error) {
       let handled = false;
       if (errorHandler) {
         handled = await errorHandler(error);
-      } 
-      
+      }
+
       if (!handled) {
         let logger = new Logger(ApiService.name);
         logger.error({
@@ -109,23 +121,30 @@ export class ApiService {
       }
     } finally {
       profiler.stop();
-      this.metricsService.setExternalCall(this.getHostname(url), profiler.duration);
+      this.metricsService.setExternalCall(
+        this.getHostname(url),
+        profiler.duration,
+      );
     }
   }
 
-  async head(url: string, timeout: number | undefined = undefined, errorHandler?: (error: any) => Promise<boolean>): Promise<any> {
+  async head(
+    url: string,
+    timeout: number | undefined = undefined,
+    errorHandler?: (error: any) => Promise<boolean>,
+  ): Promise<any> {
     timeout = timeout || this.defaultTimeout;
 
     let profiler = new PerformanceProfiler();
 
     try {
       return await axios.head(url, this.getConfig(timeout));
-    } catch(error) {
+    } catch (error) {
       let handled = false;
       if (errorHandler) {
         handled = await errorHandler(error);
-      } 
-      
+      }
+
       if (!handled) {
         let logger = new Logger(ApiService.name);
         logger.error({
@@ -141,7 +160,10 @@ export class ApiService {
       }
     } finally {
       profiler.stop();
-      this.metricsService.setExternalCall(this.getHostname(url), profiler.duration);
+      this.metricsService.setExternalCall(
+        this.getHostname(url),
+        profiler.duration,
+      );
     }
   }
 

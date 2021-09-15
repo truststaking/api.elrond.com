@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger';
 
 export class NftCollection {
   @ApiProperty()
@@ -33,16 +33,16 @@ export class NftCollection {
 
   @ApiProperty()
   canFreeze: boolean = false;
-  
+
   @ApiProperty()
   canWipe: boolean = false;
-  
+
   @ApiProperty()
   canAddSpecialRoles: boolean = false;
-  
+
   @ApiProperty()
   canTransferNFTCreateRole: boolean = false;
-  
+
   @ApiProperty()
   NFTCreateStopped: boolean = false;
 }

@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { NodesInfos } from "./nodes.infos";
+import { ApiProperty } from '@nestjs/swagger';
+import { NodesInfos } from './nodes.infos';
 
 export class Provider extends NodesInfos {
   @ApiProperty()
@@ -12,7 +12,7 @@ export class Provider extends NodesInfos {
   featured: boolean = false;
 
   @ApiProperty()
-  serviceFee: number = 0  ;
+  serviceFee: number = 0;
 
   @ApiProperty()
   delegationCap: string = '';

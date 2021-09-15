@@ -1,9 +1,9 @@
-import { Test } from "@nestjs/testing";
-import { Identity } from "src/endpoints/identities/entities/identity";
-import { IdentitiesService } from "src/endpoints/identities/identities.service";
-import { PublicAppModule } from "src/public.app.module";
-import { Constants } from "src/utils/constants";
-import Initializer from "./e2e-init";
+import { Test } from '@nestjs/testing';
+import { Identity } from 'src/endpoints/identities/entities/identity';
+import { IdentitiesService } from 'src/endpoints/identities/identities.service';
+import { PublicAppModule } from 'src/public.app.module';
+import { Constants } from 'src/utils/constants';
+import Initializer from './e2e-init';
 
 describe('Identities Service', () => {
   let identityService: IdentitiesService;
@@ -36,12 +36,12 @@ describe('Identities Service', () => {
 
       while (index < identities.length) {
         expect(identities[index]).toBeDefined();
-        expect(identities[index-1]).toHaveProperty('locked');
+        expect(identities[index - 1]).toHaveProperty('locked');
         expect(identities[index]).toHaveProperty('locked');
-        if (identities[index].locked < identities[index-1].locked) {
+        if (identities[index].locked < identities[index - 1].locked) {
           expect(false);
         }
-        index ++;
+        index++;
       }
     });
 

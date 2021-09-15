@@ -1,10 +1,10 @@
-import { Test } from "@nestjs/testing";
-import { Round } from "src/endpoints/rounds/entities/round";
-import { RoundFilter } from "src/endpoints/rounds/entities/round.filter";
-import { RoundService } from "src/endpoints/rounds/round.service";
-import { PublicAppModule } from "src/public.app.module";
-import { Constants } from "src/utils/constants";
-import Initializer from "./e2e-init";
+import { Test } from '@nestjs/testing';
+import { Round } from 'src/endpoints/rounds/entities/round';
+import { RoundFilter } from 'src/endpoints/rounds/entities/round.filter';
+import { RoundService } from 'src/endpoints/rounds/round.service';
+import { PublicAppModule } from 'src/public.app.module';
+import { Constants } from 'src/utils/constants';
+import Initializer from './e2e-init';
 
 describe('Rounds Service', () => {
   let roundService: RoundService;
@@ -31,7 +31,7 @@ describe('Rounds Service', () => {
         expect(round).not.toHaveProperty('shardId');
       }
     });
-    
+
     it('all entities should have round structure', async () => {
       for (let round of rounds) {
         expect(round).toHaveStructure(Object.keys(new Round()));

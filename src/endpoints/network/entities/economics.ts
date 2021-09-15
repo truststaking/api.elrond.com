@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger';
 
 export class Economics {
   @ApiProperty()
@@ -6,7 +6,7 @@ export class Economics {
 
   @ApiProperty()
   circulatingSupply: number = 0;
-  
+
   @ApiProperty()
   staked: number = 0;
 

@@ -1,11 +1,11 @@
-import { Injectable } from "@nestjs/common";
-import { NftMetadata } from "src/endpoints/tokens/entities/nft.metadata";
-import { BinaryUtils } from "src/utils/binary.utils";
-import { Constants } from "src/utils/constants";
-import { TokenUtils } from "src/utils/tokens.utils";
-import { ApiConfigService } from "./api.config.service";
-import { ApiService } from "./api.service";
-import { CachingService } from "./caching.service";
+import { Injectable } from '@nestjs/common';
+import { NftMetadata } from 'src/endpoints/tokens/entities/nft.metadata';
+import { BinaryUtils } from 'src/utils/binary.utils';
+import { Constants } from 'src/utils/constants';
+import { TokenUtils } from 'src/utils/tokens.utils';
+import { ApiConfigService } from './api.config.service';
+import { ApiService } from './api.service';
+import { CachingService } from './caching.service';
 
 @Injectable()
 export class NftExtendedAttributesService {
@@ -16,10 +16,13 @@ export class NftExtendedAttributesService {
     private readonly apiConfigService: ApiConfigService,
     private readonly apiService: ApiService,
   ) {
-    this.NFT_THUMBNAIL_PREFIX = this.apiConfigService.getMediaUrl() + '/nfts/asset';
+    this.NFT_THUMBNAIL_PREFIX =
+      this.apiConfigService.getMediaUrl() + '/nfts/asset';
   }
 
-  async getExtendedAttributesFromRawAttributes(attributes: string): Promise<NftMetadata | undefined> {
+  async getExtendedAttributesFromRawAttributes(
+    attributes: string,
+  ): Promise<NftMetadata | undefined> {
     let metadata = this.getMetadata(attributes);
     if (metadata === undefined) {
       return undefined;
@@ -28,17 +31,22 @@ export class NftExtendedAttributesService {
     return this.getExtendedAttributesFromMetadata(metadata);
   }
 
-  async getExtendedAttributesFromMetadata(metadata: string): Promise<NftMetadata | undefined> {
+  async getExtendedAttributesFromMetadata(
+    metadata: string,
+  ): Promise<NftMetadata | undefined> {
     let result = await this.cachingService.getOrSetCache<NftMetadata>(
       `nftExtendedAttributes:${metadata}`,
       async () => await this.getExtendedAttributesFromIpfs(metadata ?? ''),
       Constants.oneWeek(),
-      Constants.oneDay()
+      Constants.oneDay(),
     );
 
     if (Object.keys(result).length > 0) {
       if (result.fileUri) {
-        result.fileUri = TokenUtils.computeNftUri(result.fileUri, this.NFT_THUMBNAIL_PREFIX);
+        result.fileUri = TokenUtils.computeNftUri(
+          result.fileUri,
+          this.NFT_THUMBNAIL_PREFIX,
+        );
       }
 
       return result;
@@ -47,9 +55,14 @@ export class NftExtendedAttributesService {
     return undefined;
   }
 
-  private async getExtendedAttributesFromIpfs(metadata: string): Promise<NftMetadata> {
+  private async getExtendedAttributesFromIpfs(
+    metadata: string,
+  ): Promise<NftMetadata> {
     let ipfsUri = `https://ipfs.io/ipfs/${metadata}`;
-    let processedIpfsUri = TokenUtils.computeNftUri(ipfsUri, this.NFT_THUMBNAIL_PREFIX);
+    let processedIpfsUri = TokenUtils.computeNftUri(
+      ipfsUri,
+      this.NFT_THUMBNAIL_PREFIX,
+    );
 
     let result = await this.apiService.get(processedIpfsUri, 5000);
     return result.data;

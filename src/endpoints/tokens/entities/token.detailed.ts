@@ -1,6 +1,6 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { Token } from "./token";
-import { TokenAssets } from "./token.assets";
+import { ApiProperty } from '@nestjs/swagger';
+import { Token } from './token';
+import { TokenAssets } from './token.assets';
 
 export class TokenDetailed extends Token {
   @ApiProperty()
@@ -20,7 +20,7 @@ export class TokenDetailed extends Token {
 
   @ApiProperty()
   canFreeze: boolean = false;
-  
+
   @ApiProperty()
   canWipe: boolean = false;
 
