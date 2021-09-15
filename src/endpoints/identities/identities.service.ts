@@ -21,7 +21,7 @@ export class IdentitiesService {
   ) {}
 
   async getIdentity(identifier: string): Promise<Identity | undefined> {
-    let identities = await this.getAllIdentities();
+    const identities = await this.getAllIdentities();
     return identities.find((x) => x.identity === identifier);
   }
 
@@ -64,7 +64,7 @@ export class IdentitiesService {
     nodesInfo.numNodes = nodes.length;
     nodesInfo.stake = totalStake.toString();
     nodesInfo.topUp = totalTopUp.toString();
-    let totalLocked = totalStake + totalTopUp;
+    const totalLocked = totalStake + totalTopUp;
     nodesInfo.locked = totalLocked.toString();
 
     return nodesInfo;
@@ -176,14 +176,14 @@ export class IdentitiesService {
   }
 
   async getAllIdentitiesRaw(): Promise<Identity[]> {
-    let nodes = await this.nodeService.getAllNodes();
+    const nodes = await this.nodeService.getAllNodes();
 
-    let keybaseIdentities: KeybaseIdentity[] =
+    const keybaseIdentities: KeybaseIdentity[] =
       await this.keybaseService.getCachedIdentityKeybases();
 
-    let identitiesDetailed: IdentityDetailed[] = [];
+    const identitiesDetailed: IdentityDetailed[] = [];
 
-    for (let keybaseIdentity of keybaseIdentities) {
+    for (const keybaseIdentity of keybaseIdentities) {
       if (keybaseIdentity.identity) {
         const identityDetailed = new IdentityDetailed();
         identityDetailed.avatar = keybaseIdentity.avatar;

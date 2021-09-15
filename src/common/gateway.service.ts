@@ -11,7 +11,7 @@ export class GatewayService {
   ) {}
 
   async get(url: string): Promise<any> {
-    let result = await this.getRaw(url);
+    const result = await this.getRaw(url);
     return result.data.data;
   }
 
@@ -22,7 +22,7 @@ export class GatewayService {
   }
 
   async create(url: string, data: any): Promise<any> {
-    let result = await this.createRaw(url, data);
+    const result = await this.createRaw(url, data);
     return result.data.data;
   }
 

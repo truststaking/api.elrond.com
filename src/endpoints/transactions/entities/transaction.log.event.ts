@@ -2,14 +2,14 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class TransactionLogEvent {
   @ApiProperty()
-  address: string = '';
+  address = '';
 
   @ApiProperty()
-  identifier: string = '';
+  identifier = '';
 
   @ApiProperty()
   topics: string[] = [];
 
   @ApiProperty()
-  data: string = '';
+  data = '';
 }

@@ -22,9 +22,10 @@ export class LoggingInterceptor implements NestInterceptor {
   }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    let apiFunction = context.getClass().name + '.' + context.getHandler().name;
+    const apiFunction =
+      context.getClass().name + '.' + context.getHandler().name;
 
-    let profiler = new PerformanceProfiler(apiFunction);
+    const profiler = new PerformanceProfiler(apiFunction);
 
     const request = context.getArgByIndex(0);
 
@@ -73,7 +74,7 @@ export class LoggingInterceptor implements NestInterceptor {
       catchError((err) => {
         profiler.stop();
 
-        let statusCode = err.status ?? HttpStatus.INTERNAL_SERVER_ERROR;
+        const statusCode = err.status ?? HttpStatus.INTERNAL_SERVER_ERROR;
         this.metricsService.setApiCall(
           apiFunction,
           statusCode,

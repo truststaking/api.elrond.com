@@ -27,7 +27,7 @@ import { EventsGateway } from './websockets/events.gateway';
     {
       provide: 'PUBSUB_SERVICE',
       useFactory: (apiConfigService: ApiConfigService) => {
-        let clientOptions: ClientOptions = {
+        const clientOptions: ClientOptions = {
           transport: Transport.REDIS,
           options: {
             url: `redis://${apiConfigService.getRedisUrl()}:6379`,

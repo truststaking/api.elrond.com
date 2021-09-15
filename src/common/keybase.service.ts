@@ -34,7 +34,7 @@ export class KeybaseService {
   async confirmKeybasesAgainstCache(): Promise<{
     [key: string]: KeybaseState;
   }> {
-    let nodes = await this.nodeService.getHeartbeat();
+    const nodes = await this.nodeService.getHeartbeat();
 
     const keybasesArr: Keybase[] = nodes
       .filter((node) => !!node.identity)
@@ -42,22 +42,22 @@ export class KeybaseService {
         return { identity: node.identity, key: node.bls };
       });
 
-    let keybaseGetPromises = keybasesArr.map((keybase) =>
+    const keybaseGetPromises = keybasesArr.map((keybase) =>
       this.cachingService.getCache<boolean>(`keybase:${keybase.key}`),
     );
-    let keybaseGetResults = await Promise.all(keybaseGetPromises);
+    const keybaseGetResults = await Promise.all(keybaseGetPromises);
 
-    let confirmedKeybases = keybasesArr.zip<boolean | undefined, KeybaseState>(
-      keybaseGetResults,
-      (first, second) => ({
-        identity: first.identity,
-        confirmed: second ?? false,
-      }),
-    );
+    const confirmedKeybases = keybasesArr.zip<
+      boolean | undefined,
+      KeybaseState
+    >(keybaseGetResults, (first, second) => ({
+      identity: first.identity,
+      confirmed: second ?? false,
+    }));
 
-    let result: { [key: string]: KeybaseState } = {};
-    for (let [index, confirmedKeybase] of confirmedKeybases.entries()) {
-      let bls = keybasesArr[index].key;
+    const result: { [key: string]: KeybaseState } = {};
+    for (const [index, confirmedKeybase] of confirmedKeybases.entries()) {
+      const bls = keybasesArr[index].key;
       if (bls !== undefined) {
         result[bls] = confirmedKeybase;
       }
@@ -94,7 +94,7 @@ export class KeybaseService {
     const keybases: { [key: string]: KeybaseState } = {};
 
     keybaseArr.forEach((keybase, index) => {
-      let keybaseState = new KeybaseState();
+      const keybaseState = new KeybaseState();
       keybaseState.identity = keybase.identity;
 
       if (confirmedKeybases[index]) {
@@ -114,7 +114,7 @@ export class KeybaseService {
   }
 
   async confirmKeybaseNodesAgainstKeybasePub() {
-    let nodes = await this.nodeService.getHeartbeat();
+    const nodes = await this.nodeService.getHeartbeat();
 
     const keybasesArr: Keybase[] = nodes
       .filter((node) => !!node.identity)
@@ -133,7 +133,7 @@ export class KeybaseService {
     const keybases: { [key: string]: KeybaseState } = {};
 
     keybasesArr.forEach((keybase, index) => {
-      let keybaseState = new KeybaseState();
+      const keybaseState = new KeybaseState();
       keybaseState.identity = keybase.identity;
 
       if (confirmedKeybases[index]) {
@@ -153,9 +153,9 @@ export class KeybaseService {
   }
 
   async getIdentitiesProfilesAgainstKeybasePub(): Promise<KeybaseIdentity[]> {
-    let nodes = await this.nodeService.getAllNodes();
+    const nodes = await this.nodeService.getAllNodes();
 
-    let keys = [
+    const keys = [
       ...new Set(
         nodes
           .filter(({ identity }) => !!identity)
@@ -165,13 +165,14 @@ export class KeybaseService {
       .filter((x) => x !== null)
       .map((x) => x ?? '');
 
-    let identities: KeybaseIdentity[] = await this.cachingService.batchProcess(
-      keys,
-      (key) => `identityProfile:${key}`,
-      async (key) => (await this.getProfile(key)) ?? new KeybaseIdentity(),
-      Constants.oneMinute() * 30,
-      true,
-    );
+    const identities: KeybaseIdentity[] =
+      await this.cachingService.batchProcess(
+        keys,
+        (key) => `identityProfile:${key}`,
+        async (key) => (await this.getProfile(key)) ?? new KeybaseIdentity(),
+        Constants.oneMinute() * 30,
+        true,
+      );
 
     return identities;
   }

@@ -35,13 +35,13 @@ export class TagService {
     };
     elasticQueryAdapter.sort = [count];
 
-    let result = await this.elasticService.getList(
+    const result = await this.elasticService.getList(
       'tags',
       'tag',
       elasticQueryAdapter,
     );
 
-    let nftTags: Tag[] = result.map((item) =>
+    const nftTags: Tag[] = result.map((item) =>
       ApiUtils.mergeObjects(new Tag(), item),
     );
 
@@ -49,7 +49,7 @@ export class TagService {
   }
 
   async getNftTag(tag: string): Promise<Tag> {
-    let result = await this.elasticService.getItem('tags', 'tag', tag);
+    const result = await this.elasticService.getItem('tags', 'tag', tag);
 
     return ApiUtils.mergeObjects(new Tag(), result);
   }

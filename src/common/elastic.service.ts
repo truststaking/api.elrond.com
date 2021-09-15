@@ -37,7 +37,7 @@ export class ElasticService {
       elasticQuery = buildElasticQuery(elasticQueryAdapter);
     }
 
-    let profiler = new PerformanceProfiler();
+    const profiler = new PerformanceProfiler();
 
     const result: any = await this.post(url, elasticQuery);
 
@@ -45,18 +45,18 @@ export class ElasticService {
 
     this.metricsService.setElasticDuration(collection, profiler.duration);
 
-    let count = result.data.count;
+    const count = result.data.count;
 
     return count;
   }
 
   async getItem(collection: string, key: string, identifier: string) {
     const url = `${this.url}/${collection}/_search?q=_id:${identifier}`;
-    let result = await this.get(url);
+    const result = await this.get(url);
 
-    let hits = result.data?.hits?.hits;
+    const hits = result.data?.hits?.hits;
     if (hits && hits.length > 0) {
-      let document = hits[0];
+      const document = hits[0];
 
       return this.formatItem(document, key);
     }
@@ -81,7 +81,7 @@ export class ElasticService {
 
     const elasticQuery = buildElasticQuery(elasticQueryAdapter);
 
-    let profiler = new PerformanceProfiler();
+    const profiler = new PerformanceProfiler();
 
     const result = await this.post(url, elasticQuery);
 
@@ -89,12 +89,12 @@ export class ElasticService {
 
     this.metricsService.setElasticDuration(collection, profiler.duration);
 
-    let took = result.data.took;
+    const took = result.data.took;
     if (!isNaN(took)) {
       this.metricsService.setElasticTook(collection, took);
     }
 
-    let documents = result.data.hits.hits;
+    const documents = result.data.hits.hits;
     return documents.map((document: any) => this.formatItem(document, key));
   }
 
@@ -106,7 +106,7 @@ export class ElasticService {
 
     const elasticQuery = buildElasticQuery(elasticQueryAdapter);
 
-    let documents = await this.getDocuments('accountsesdt', elasticQuery);
+    const documents = await this.getDocuments('accountsesdt', elasticQuery);
 
     return documents.map((document: any) =>
       this.formatItem(document, 'identifier'),
@@ -121,7 +121,7 @@ export class ElasticService {
 
     const elasticQuery = buildElasticQuery(elasticQueryAdapter);
 
-    let documents = await this.getDocuments('tokens', elasticQuery);
+    const documents = await this.getDocuments('tokens', elasticQuery);
 
     return documents.map((document: any) =>
       this.formatItem(document, 'identifier'),
@@ -136,7 +136,7 @@ export class ElasticService {
 
     const elasticQuery = buildElasticQuery(elasticQueryAdapter);
 
-    let documents = await this.getDocuments('accountsesdt', elasticQuery);
+    const documents = await this.getDocuments('accountsesdt', elasticQuery);
 
     return documents.map((document: any) =>
       this.formatItem(document, 'identifier'),
@@ -165,7 +165,7 @@ export class ElasticService {
 
     const elasticQuery = buildElasticQuery(elasticQueryAdapter);
 
-    let documents = await this.getDocuments('accountsesdt', elasticQuery);
+    const documents = await this.getDocuments('accountsesdt', elasticQuery);
 
     return documents.map((document: any) =>
       this.formatItem(document, 'identifier'),
@@ -186,7 +186,7 @@ export class ElasticService {
 
     const elasticQuery = buildElasticQuery(elasticQueryAdapter);
 
-    let documents = await this.getDocuments('accountsesdt', elasticQuery);
+    const documents = await this.getDocuments('accountsesdt', elasticQuery);
 
     return documents.map((document: any) =>
       this.formatItem(document, 'identifier'),
@@ -219,7 +219,7 @@ export class ElasticService {
       { name: 'timestamp', order: ElasticSortOrder.descending },
     ];
 
-    let queries = [];
+    const queries = [];
     queries.push(QueryType.Exists('identifier'));
 
     if (filter.search !== undefined) {
@@ -249,9 +249,9 @@ export class ElasticService {
     }
 
     if (filter.tags) {
-      let tagArray = filter.tags.split(',');
+      const tagArray = filter.tags.split(',');
       if (tagArray.length > 0) {
-        for (let tag of tagArray) {
+        for (const tag of tagArray) {
           queries.push(QueryType.Nested('data', { 'data.tags': tag }));
         }
       }
@@ -264,7 +264,7 @@ export class ElasticService {
     }
 
     if (filter.identifiers) {
-      let identifiers = filter.identifiers.split(',');
+      const identifiers = filter.identifiers.split(',');
       queries.push(
         QueryType.Should(
           identifiers.map((identifier) =>
@@ -287,14 +287,14 @@ export class ElasticService {
     filter: NftFilter,
     identifier: string | undefined,
   ) {
-    let query = await this.buildElasticNftFilter(
+    const query = await this.buildElasticNftFilter(
       from,
       size,
       filter,
       identifier,
     );
 
-    let documents = await this.getDocuments('tokens', query);
+    const documents = await this.getDocuments('tokens', query);
 
     return documents.map((document: any) =>
       this.formatItem(document, 'identifier'),
@@ -311,12 +311,12 @@ export class ElasticService {
       { name: 'timestamp', order: ElasticSortOrder.descending },
     ];
 
-    let mustNotQueries = [];
+    const mustNotQueries = [];
     mustNotQueries.push(QueryType.Exists('identifier'));
 
     elasticQueryAdapter.condition.must_not = mustNotQueries;
 
-    let mustQueries = [];
+    const mustQueries = [];
     if (search !== undefined) {
       mustQueries.push(QueryType.Wildcard('token', `*${search}*`));
     }
@@ -326,7 +326,7 @@ export class ElasticService {
     }
     elasticQueryAdapter.condition.must = mustQueries;
 
-    let shouldQueries = [];
+    const shouldQueries = [];
     shouldQueries.push(QueryType.Match('type', NftType.SemiFungibleESDT));
     shouldQueries.push(QueryType.Match('type', NftType.NonFungibleESDT));
     elasticQueryAdapter.condition.should = shouldQueries;
@@ -351,11 +351,11 @@ export class ElasticService {
       { name: 'timestamp', order: ElasticSortOrder.descending },
     ];
 
-    let mustNotQueries = [];
+    const mustNotQueries = [];
     mustNotQueries.push(QueryType.Exists('identifier'));
     elasticQueryAdapter.condition.must_not = mustNotQueries;
 
-    let mustQueries = [];
+    const mustQueries = [];
     if (search !== undefined) {
       mustQueries.push(QueryType.Wildcard('token', `*${search}*`));
     }
@@ -373,10 +373,10 @@ export class ElasticService {
     }
     elasticQueryAdapter.condition.must = mustQueries;
 
-    let shouldQueries = [];
+    const shouldQueries = [];
 
     if (identifiers.length > 0) {
-      for (let identifier of identifiers) {
+      for (const identifier of identifiers) {
         shouldQueries.push(
           QueryType.Match('token', identifier, QueryOperator.AND),
         );
@@ -389,7 +389,7 @@ export class ElasticService {
 
     const elasticQuery = buildElasticQuery(elasticQueryAdapter);
 
-    let documents = await this.getDocuments('tokens', elasticQuery);
+    const documents = await this.getDocuments('tokens', elasticQuery);
 
     return documents.map((document: any) =>
       this.formatItem(document, 'identifier'),
@@ -410,7 +410,7 @@ export class ElasticService {
 
     const elasticQuery = buildElasticQuery(elasticQueryAdapter);
 
-    let documents = await this.getDocuments('tokens', elasticQuery);
+    const documents = await this.getDocuments('tokens', elasticQuery);
 
     return documents.map((document: any) =>
       this.formatItem(document, 'identifier'),
@@ -418,7 +418,7 @@ export class ElasticService {
   }
 
   async getTokenCount(filter: NftFilter): Promise<number> {
-    let query = await this.buildElasticNftFilter(0, 0, filter, undefined);
+    const query = await this.buildElasticNftFilter(0, 0, filter, undefined);
 
     return await this.getDocumentCount('tokens', query);
   }
@@ -440,15 +440,15 @@ export class ElasticService {
   }
 
   private async getDocuments(collection: string, body: any) {
-    let profiler = new PerformanceProfiler();
+    const profiler = new PerformanceProfiler();
 
-    let result = await this.post(`${this.url}/${collection}/_search`, body);
+    const result = await this.post(`${this.url}/${collection}/_search`, body);
 
     profiler.stop();
 
     this.metricsService.setElasticDuration(collection, profiler.duration);
 
-    let took = result.data.tookn;
+    const took = result.data.tookn;
     if (!isNaN(took)) {
       this.metricsService.setElasticTook(collection, took);
     }
@@ -457,7 +457,7 @@ export class ElasticService {
   }
 
   private async getDocumentCount(collection: string, body: any) {
-    let profiler = new PerformanceProfiler();
+    const profiler = new PerformanceProfiler();
 
     const {
       data: {

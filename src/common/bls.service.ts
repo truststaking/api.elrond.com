@@ -23,11 +23,11 @@ export class BlsService {
 
     const url = `${this.url}/validators/_search?q=_id:${key}`;
 
-    let result = await this.elasticService.get(url);
+    const result = await this.elasticService.get(url);
 
-    let hits = result.data?.hits?.hits;
+    const hits = result.data?.hits?.hits;
     if (hits && hits.length > 0) {
-      let publicKeys = hits[0]._source.publicKeys;
+      const publicKeys = hits[0]._source.publicKeys;
 
       this.publicKeysCache[key] = publicKeys;
 
@@ -42,7 +42,7 @@ export class BlsService {
     shardId: number,
     epoch: number,
   ): Promise<number | boolean> {
-    let publicKeys = await this.getPublicKeys(shardId, epoch);
+    const publicKeys = await this.getPublicKeys(shardId, epoch);
 
     return publicKeys.indexOf(bls);
   }

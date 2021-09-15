@@ -2,23 +2,23 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class Token {
   @ApiProperty()
-  identifier: string = '';
+  identifier = '';
 
   @ApiProperty()
-  name: string = '';
+  name = '';
 
   @ApiProperty()
-  owner: string = '';
+  owner = '';
 
   @ApiProperty()
-  minted: string = '';
+  minted = '';
 
   @ApiProperty()
-  burnt: string = '';
+  burnt = '';
 
   @ApiProperty()
-  decimals: number = 0;
+  decimals = 0;
 
   @ApiProperty()
-  isPaused: boolean = false;
+  isPaused = false;
 }

@@ -2,11 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class TransactionReceipt {
   @ApiProperty()
-  value: string = '';
+  value = '';
 
   @ApiProperty()
-  sender: string = '';
+  sender = '';
 
   @ApiProperty()
-  data: string = '';
+  data = '';
 }

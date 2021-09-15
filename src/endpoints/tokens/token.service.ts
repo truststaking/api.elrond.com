@@ -48,8 +48,8 @@ export class TokenService {
   }
 
   async getToken(identifier: string): Promise<TokenDetailed | undefined> {
-    let tokens = await this.getAllTokens();
-    let token = tokens.find((x) => x.identifier === identifier);
+    const tokens = await this.getAllTokens();
+    const token = tokens.find((x) => x.identifier === identifier);
     if (token) {
       token.assets = await this.tokenAssetService.getAssets(token.identifier);
 
@@ -69,7 +69,7 @@ export class TokenService {
 
     tokens = tokens.slice(from, from + size);
 
-    for (let token of tokens) {
+    for (const token of tokens) {
       token.assets = await this.tokenAssetService.getAssets(token.identifier);
     }
 
@@ -82,7 +82,7 @@ export class TokenService {
     let tokens = await this.getAllTokens();
 
     if (filter.search) {
-      let searchLower = filter.search.toLowerCase();
+      const searchLower = filter.search.toLowerCase();
 
       tokens = tokens.filter(
         (token) =>
@@ -92,7 +92,7 @@ export class TokenService {
     }
 
     if (filter.name) {
-      let nameLower = filter.name.toLowerCase();
+      const nameLower = filter.name.toLowerCase();
 
       tokens = tokens.filter((token) =>
         token.name.toLowerCase().includes(nameLower),
@@ -100,7 +100,7 @@ export class TokenService {
     }
 
     if (filter.identifier) {
-      let identifierLower = filter.identifier.toLowerCase();
+      const identifierLower = filter.identifier.toLowerCase();
 
       tokens = tokens.filter((token) =>
         token.identifier.toLowerCase().includes(identifierLower),
@@ -111,13 +111,13 @@ export class TokenService {
   }
 
   async getTokenCount(filter: TokenFilter): Promise<number> {
-    let tokens = await this.getFilteredTokens(filter);
+    const tokens = await this.getFilteredTokens(filter);
 
     return tokens.length;
   }
 
   async getNft(identifier: string): Promise<TokenProperties | undefined> {
-    let properties = await this.cachingService.getOrSetCache(
+    const properties = await this.cachingService.getOrSetCache(
       `nft:${identifier}`,
       async () => await this.getTokenProperties(identifier),
       Constants.oneWeek(),
@@ -137,7 +137,7 @@ export class TokenService {
   ): Promise<NftCollection[]> {
     const { from, size } = queryPagination;
 
-    let tokenCollections = await this.elasticService.getTokenCollections(
+    const tokenCollections = await this.elasticService.getTokenCollections(
       from,
       size,
       filter.search,
@@ -147,14 +147,14 @@ export class TokenService {
       filter.identifiers,
     );
 
-    let nftCollections: NftCollection[] = [];
-    for (let tokenCollection of tokenCollections) {
-      let nftCollection = new NftCollection();
+    const nftCollections: NftCollection[] = [];
+    for (const tokenCollection of tokenCollections) {
+      const nftCollection = new NftCollection();
       nftCollection.collection = tokenCollection.token;
 
       ApiUtils.mergeObjects(nftCollection, tokenCollection);
 
-      let nft = await this.getNft(nftCollection.collection);
+      const nft = await this.getNft(nftCollection.collection);
       if (nft) {
         ApiUtils.mergeObjects(nftCollection, nft);
       }
@@ -174,7 +174,7 @@ export class TokenService {
   async getNftCollection(
     collection: string,
   ): Promise<NftCollection | undefined> {
-    let tokenCollections = await this.elasticService.getTokenCollections(
+    const tokenCollections = await this.elasticService.getTokenCollections(
       0,
       1,
       undefined,
@@ -187,13 +187,13 @@ export class TokenService {
       return undefined;
     }
 
-    let tokenCollection = tokenCollections[0];
-    let nftCollection = new NftCollection();
+    const tokenCollection = tokenCollections[0];
+    const nftCollection = new NftCollection();
     nftCollection.collection = tokenCollection.token;
 
     ApiUtils.mergeObjects(nftCollection, tokenCollection);
 
-    let nft = await this.getNft(nftCollection.collection);
+    const nft = await this.getNft(nftCollection.collection);
     if (nft) {
       ApiUtils.mergeObjects(nftCollection, nft);
     }
@@ -204,18 +204,19 @@ export class TokenService {
   async getNfts(
     queryPagination: QueryPagination,
     filter: NftFilter,
-    withOwner: boolean = false,
+    withOwner = false,
   ): Promise<Nft[] | NftDetailed[]> {
     const { from, size } = queryPagination;
 
-    let nfts = await this.getNftsInternal(from, size, filter, undefined);
+    const nfts = await this.getNftsInternal(from, size, filter, undefined);
 
     if (withOwner) {
-      let accountsEsdts = await this.elasticService.getAccountEsdtByIdentifiers(
-        nfts.map(({ identifier }) => identifier),
-      );
+      const accountsEsdts =
+        await this.elasticService.getAccountEsdtByIdentifiers(
+          nfts.map(({ identifier }) => identifier),
+        );
 
-      for (let nft of nfts) {
+      for (const nft of nfts) {
         if (nft.type === NftType.NonFungibleESDT) {
           const accountEsdt = accountsEsdts.find(
             (accountEsdt: any) => accountEsdt.identifier == nft.identifier,
@@ -234,7 +235,7 @@ export class TokenService {
     identifier: string,
     nftDetailed: NftDetailed,
   ): Promise<NftDetailed> {
-    let accountsEsdt = await this.elasticService.getAccountEsdtByIdentifier(
+    const accountsEsdt = await this.elasticService.getAccountEsdtByIdentifier(
       identifier,
     );
     if (nftDetailed.type === NftType.NonFungibleESDT) {
@@ -244,7 +245,7 @@ export class TokenService {
       delete nftDetailed.owners;
     } else {
       nftDetailed.owners = accountsEsdt.map((esdt: any) => {
-        let owner = new NftOwner();
+        const owner = new NftOwner();
         owner.address = esdt.address;
         owner.balance = esdt.balance;
 
@@ -259,7 +260,7 @@ export class TokenService {
   }
 
   async getSingleNft(identifier: string): Promise<NftDetailed | undefined> {
-    let nfts = await this.getNftsInternal(0, 1, new NftFilter(), identifier);
+    const nfts = await this.getNftsInternal(0, 1, new NftFilter(), identifier);
     if (nfts.length === 0) {
       return undefined;
     }
@@ -281,24 +282,24 @@ export class TokenService {
     filter: NftFilter,
     identifier: string | undefined,
   ): Promise<Nft[]> {
-    let elasticNfts = await this.elasticService.getTokens(
+    const elasticNfts = await this.elasticService.getTokens(
       from,
       size,
       filter,
       identifier,
     );
 
-    let nfts: Nft[] = [];
+    const nfts: Nft[] = [];
 
-    for (let elasticNft of elasticNfts) {
-      let nft = new Nft();
+    for (const elasticNft of elasticNfts) {
+      const nft = new Nft();
       nft.identifier = elasticNft.identifier;
       nft.collection = elasticNft.token;
       nft.type = elasticNft.type;
       nft.nonce = parseInt('0x' + nft.identifier.split('-')[2]);
       nft.timestamp = elasticNft.timestamp;
 
-      let elasticNftData = elasticNft.data;
+      const elasticNftData = elasticNft.data;
       if (elasticNftData) {
         nft.name = elasticNftData.name;
         nft.creator = elasticNftData.creator;
@@ -347,9 +348,9 @@ export class TokenService {
 
     await this.nftThumbnailService.updateThumbnailUrlForNfts(nfts);
 
-    for (let nft of nfts) {
+    for (const nft of nfts) {
       if (nft.type === NftType.SemiFungibleESDT) {
-        let gatewayNft = await this.getNft(nft.collection);
+        const gatewayNft = await this.getNft(nft.collection);
         if (gatewayNft) {
           nft.name = gatewayNft.name;
         }
@@ -364,7 +365,7 @@ export class TokenService {
   }
 
   async getTokenCountForAddress(address: string): Promise<number> {
-    let tokens = await this.getAllTokensForAddress(address);
+    const tokens = await this.getAllTokensForAddress(address);
     return tokens.length;
   }
 
@@ -378,7 +379,7 @@ export class TokenService {
 
     tokens = tokens.slice(from, from + size);
 
-    for (let token of tokens) {
+    for (const token of tokens) {
       token.assets = await this.tokenAssetService.getAssets(token.identifier);
     }
 
@@ -391,7 +392,7 @@ export class TokenService {
     address: string,
     queryPagination: QueryPagination,
   ): Promise<NftCollection[]> {
-    let esdtResult = await this.gatewayService.get(
+    const esdtResult = await this.gatewayService.get(
       `address/${address}/registered-nfts`,
     );
 
@@ -399,14 +400,14 @@ export class TokenService {
       return [];
     }
 
-    let filter = new CollectionFilter();
+    const filter = new CollectionFilter();
     filter.identifiers = esdtResult.tokens;
 
     return await this.getNftCollections(queryPagination, filter);
   }
 
   async getCollectionCountForAddress(address: string): Promise<number> {
-    let esdtResult = await this.gatewayService.get(
+    const esdtResult = await this.gatewayService.get(
       `address/${address}/registered-nfts`,
     );
 
@@ -417,9 +418,9 @@ export class TokenService {
     address: string,
     tokenIdentifier: string,
   ): Promise<TokenWithBalance | undefined> {
-    let allTokens = await this.getAllTokensForAddress(address);
+    const allTokens = await this.getAllTokensForAddress(address);
 
-    let foundToken = allTokens.find((x) => x.identifier === tokenIdentifier);
+    const foundToken = allTokens.find((x) => x.identifier === tokenIdentifier);
     if (!foundToken) {
       return undefined;
     }
@@ -430,10 +431,10 @@ export class TokenService {
   }
 
   async getAllTokensForAddress(address: string): Promise<TokenWithBalance[]> {
-    let tokens = await this.getAllTokens();
+    const tokens = await this.getAllTokens();
 
-    let tokensIndexed: { [index: string]: Token } = {};
-    for (let token of tokens) {
+    const tokensIndexed: { [index: string]: Token } = {};
+    for (const token of tokens) {
       tokensIndexed[token.identifier] = token;
     }
 
@@ -441,7 +442,7 @@ export class TokenService {
     try {
       esdtResult = await this.gatewayService.get(`address/${address}/esdt`);
     } catch (error) {
-      let errorMessage = error?.response?.data?.error;
+      const errorMessage = error?.response?.data?.error;
       if (errorMessage && errorMessage.includes('account was not found')) {
         return [];
       }
@@ -449,15 +450,15 @@ export class TokenService {
       throw error;
     }
 
-    let tokensWithBalance: TokenWithBalance[] = [];
+    const tokensWithBalance: TokenWithBalance[] = [];
 
-    for (let tokenIdentifier of Object.keys(esdtResult.esdts)) {
+    for (const tokenIdentifier of Object.keys(esdtResult.esdts)) {
       if (!TokenUtils.isEsdt(tokenIdentifier)) {
         continue;
       }
 
-      let esdt = esdtResult.esdts[tokenIdentifier];
-      let token = tokensIndexed[tokenIdentifier];
+      const esdt = esdtResult.esdts[tokenIdentifier];
+      const token = tokensIndexed[tokenIdentifier];
       if (!token) {
         this.logger.log(
           `Could not find token with identifier ${tokenIdentifier}`,
@@ -465,7 +466,7 @@ export class TokenService {
         continue;
       }
 
-      let tokenWithBalance = {
+      const tokenWithBalance = {
         ...token,
         ...esdt,
       };
@@ -473,7 +474,7 @@ export class TokenService {
       tokensWithBalance.push(tokenWithBalance);
     }
 
-    for (let token of tokensWithBalance) {
+    for (const token of tokensWithBalance) {
       // @ts-ignore
       token.identifier = token.tokenIdentifier;
       // @ts-ignore
@@ -494,13 +495,13 @@ export class TokenService {
 
     nfts = nfts.splice(from, from + size);
 
-    let identifiers = nfts.map((x) => x.identifier);
-    let elasticNfts = await this.elasticService.getTokensByIdentifiers(
+    const identifiers = nfts.map((x) => x.identifier);
+    const elasticNfts = await this.elasticService.getTokensByIdentifiers(
       identifiers,
     );
 
-    for (let nft of nfts) {
-      let elasticNft = elasticNfts.find(
+    for (const nft of nfts) {
+      const elasticNft = elasticNfts.find(
         (x: any) => x.identifier === nft.identifier,
       );
       if (elasticNft) {
@@ -515,7 +516,7 @@ export class TokenService {
     address: string,
     filter: NftFilter,
   ): Promise<number> {
-    let nfts = await this.getNftsForAddressInternal(address, filter);
+    const nfts = await this.getNftsForAddressInternal(address, filter);
 
     return nfts.length;
   }
@@ -530,7 +531,7 @@ export class TokenService {
         `address/${address}/esdt`,
       );
     } catch (error) {
-      let errorMessage = error?.response?.data?.error;
+      const errorMessage = error?.response?.data?.error;
       if (errorMessage && errorMessage.includes('account was not found')) {
         return [];
       }
@@ -538,19 +539,19 @@ export class TokenService {
       throw error;
     }
 
-    let gatewayNfts = Object.values(gatewayNftResult['esdts']).map(
+    const gatewayNfts = Object.values(gatewayNftResult['esdts']).map(
       (x) => x as any,
     );
 
     let nfts: NftAccount[] = [];
 
-    for (let gatewayNft of gatewayNfts) {
-      let components = gatewayNft.tokenIdentifier.split('-');
+    for (const gatewayNft of gatewayNfts) {
+      const components = gatewayNft.tokenIdentifier.split('-');
       if (components.length !== 3) {
         continue;
       }
 
-      let nft = new NftAccount();
+      const nft = new NftAccount();
       nft.identifier = gatewayNft.tokenIdentifier;
       nft.collection = gatewayNft.tokenIdentifier
         .split('-')
@@ -593,7 +594,7 @@ export class TokenService {
         }
       }
 
-      let gatewayNftDetails = await this.getNft(nft.collection);
+      const gatewayNftDetails = await this.getNft(nft.collection);
       if (gatewayNftDetails) {
         nft.type = gatewayNftDetails.type;
       }
@@ -602,7 +603,7 @@ export class TokenService {
     }
 
     if (filter.search) {
-      let searchLower = filter.search.toLowerCase();
+      const searchLower = filter.search.toLowerCase();
 
       nfts = nfts.filter((x) => x.name.toLowerCase().includes(searchLower));
     }
@@ -616,7 +617,7 @@ export class TokenService {
     }
 
     if (filter.tags) {
-      let tagsArray = filter.tags.split(',');
+      const tagsArray = filter.tags.split(',');
       nfts = nfts.filter(
         (nft) =>
           tagsArray.filter((tag) => nft.tags.includes(tag)).length ===
@@ -643,7 +644,7 @@ export class TokenService {
     address: string,
     identifier: string,
   ): Promise<NftAccount | undefined> {
-    let nfts = await this.getNftsForAddressInternal(address, new NftFilter());
+    const nfts = await this.getNftsForAddressInternal(address, new NftFilter());
     return nfts.find((x) => x.identifier === identifier);
   }
 
@@ -669,7 +670,7 @@ export class TokenService {
       return [];
     }
 
-    let tokens = await this.cachingService.batchProcess(
+    const tokens = await this.cachingService.batchProcess(
       tokensIdentifiers,
       (token) => `tokenProperties:${token}`,
       async (token: string) => await this.getTokenProperties(token),

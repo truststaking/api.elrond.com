@@ -14,27 +14,28 @@ export class NftThumbnailService {
   ) {}
 
   async updateThumbnailUrlForNfts(nfts: Nft[]) {
-    let mediaNfts = nfts.filter(
+    const mediaNfts = nfts.filter(
       (nft) => nft.uris.filter((uri) => uri).length > 0,
     );
 
-    let customThumbnailConfirmations = await this.cachingService.batchProcess(
+    const customThumbnailConfirmations = await this.cachingService.batchProcess(
       mediaNfts,
       (nft) => `nftCustomThumbnail:${nft.identifier}`,
       async (nft) => await this.hasCustomThumbnail(nft.identifier),
       Constants.oneWeek(),
     );
 
-    let standardThumbnailConfirmations = await this.cachingService.batchProcess(
-      mediaNfts,
-      (nft) => `nftStandardThumbnail:${nft.identifier}`,
-      async (nft) => await this.hasStandardThumbnail(nft.identifier),
-      Constants.oneWeek(),
-    );
+    const standardThumbnailConfirmations =
+      await this.cachingService.batchProcess(
+        mediaNfts,
+        (nft) => `nftStandardThumbnail:${nft.identifier}`,
+        async (nft) => await this.hasStandardThumbnail(nft.identifier),
+        Constants.oneWeek(),
+      );
 
-    for (let [index, nft] of mediaNfts.entries()) {
-      let isCustomThumbnail = customThumbnailConfirmations[index];
-      let isStandardThumbnail = standardThumbnailConfirmations[index];
+    for (const [index, nft] of mediaNfts.entries()) {
+      const isCustomThumbnail = customThumbnailConfirmations[index];
+      const isStandardThumbnail = standardThumbnailConfirmations[index];
 
       if (isCustomThumbnail === true) {
         nft.thumbnailUrl = `${this.apiConfigService.getMediaUrl()}/nfts/thumbnail/custom/${

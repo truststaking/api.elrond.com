@@ -40,13 +40,13 @@ export class BlockService {
     }
 
     if (proposer && shard !== undefined && epoch !== undefined) {
-      let index = await this.blsService.getBlsIndex(proposer, shard, epoch);
+      const index = await this.blsService.getBlsIndex(proposer, shard, epoch);
       const proposerQuery = QueryType.Match('proposer', index);
       queries.push(proposerQuery);
     }
 
     if (validator && shard !== undefined && epoch !== undefined) {
-      let index = await this.blsService.getBlsIndex(validator, shard, epoch);
+      const index = await this.blsService.getBlsIndex(validator, shard, epoch);
       const validatorsQuery = QueryType.Match('validators', index);
       queries.push(validatorsQuery);
     }
@@ -90,20 +90,20 @@ export class BlockService {
     };
     elasticQueryAdapter.sort = [timestamp];
 
-    let result = await this.elasticService.getList(
+    const result = await this.elasticService.getList(
       'blocks',
       'hash',
       elasticQueryAdapter,
     );
 
-    for (let item of result) {
+    for (const item of result) {
       item.shard = item.shardId;
     }
 
-    let blocks = [];
+    const blocks = [];
 
-    for (let item of result) {
-      let block = await this.computeProposerAndValidators(item);
+    for (const item of result) {
+      const block = await this.computeProposerAndValidators(item);
 
       blocks.push(ApiUtils.mergeObjects(new Block(), block));
     }
@@ -122,7 +122,7 @@ export class BlockService {
       ...rest
     } = item;
 
-    let key = `${shard}_${epoch}`;
+    const key = `${shard}_${epoch}`;
     let blses: any = await this.cachingService.getCacheLocal(key);
     if (!blses) {
       blses = await this.blsService.getPublicKeys(shard, epoch);
@@ -140,9 +140,9 @@ export class BlockService {
   }
 
   async getBlock(hash: string): Promise<BlockDetailed> {
-    let result = await this.elasticService.getItem('blocks', 'hash', hash);
+    const result = await this.elasticService.getItem('blocks', 'hash', hash);
 
-    let publicKeys = await this.blsService.getPublicKeys(
+    const publicKeys = await this.blsService.getPublicKeys(
       result.shardId,
       result.epoch,
     );
@@ -156,7 +156,10 @@ export class BlockService {
   }
 
   async getCurrentEpoch(): Promise<number> {
-    let blocks = await this.getBlocks(new BlockFilter(), { from: 0, size: 1 });
+    const blocks = await this.getBlocks(new BlockFilter(), {
+      from: 0,
+      size: 1,
+    });
     if (blocks.length === 0) {
       return -1;
     }

@@ -2,41 +2,41 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class Block {
   @ApiProperty()
-  hash: string = '';
+  hash = '';
 
   @ApiProperty()
-  epoch: number = 0;
+  epoch = 0;
 
   @ApiProperty()
-  nonce: number = 0;
+  nonce = 0;
 
   @ApiProperty()
-  prevHash: string = '';
+  prevHash = '';
 
   @ApiProperty()
-  proposer: string = '';
+  proposer = '';
 
   @ApiProperty()
-  pubKeyBitmap: string = '';
+  pubKeyBitmap = '';
 
   @ApiProperty()
-  round: number = 0;
+  round = 0;
 
   @ApiProperty()
-  shard: number = 0;
+  shard = 0;
 
   @ApiProperty()
-  size: number = 0;
+  size = 0;
 
   @ApiProperty()
-  sizeTxs: number = 0;
+  sizeTxs = 0;
 
   @ApiProperty()
-  stateRootHash: string = '';
+  stateRootHash = '';
 
   @ApiProperty()
-  timestamp: number = 0;
+  timestamp = 0;
 
   @ApiProperty()
-  txCount: number = 0;
+  txCount = 0;
 }

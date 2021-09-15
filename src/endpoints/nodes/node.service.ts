@@ -53,17 +53,17 @@ export class NodeService {
   }
 
   async getNode(bls: string): Promise<Node | undefined> {
-    let allNodes = await this.getAllNodes();
+    const allNodes = await this.getAllNodes();
     return allNodes.find((x) => x.bls === bls);
   }
 
   async getNodeCount(query: NodeFilter): Promise<number> {
-    let allNodes = await this.getFilteredNodes(query);
+    const allNodes = await this.getFilteredNodes(query);
     return allNodes.length;
   }
 
   async getNodeVersions(): Promise<NodeVersions> {
-    let allNodes = await this.getAllNodes();
+    const allNodes = await this.getAllNodes();
 
     const data = allNodes
       .filter(({ type }) => type === NodeType.validator)
@@ -91,9 +91,9 @@ export class NodeService {
   }
 
   private async getFilteredNodes(query: NodeFilter): Promise<Node[]> {
-    let allNodes = await this.getAllNodes();
+    const allNodes = await this.getAllNodes();
 
-    let filteredNodes = allNodes.filter((node) => {
+    const filteredNodes = allNodes.filter((node) => {
       if (query.search !== undefined) {
         const nodeMatches =
           node.bls &&
@@ -180,7 +180,7 @@ export class NodeService {
   ): Promise<Node[]> {
     const { from, size } = queryPagination;
 
-    let filteredNodes = await this.getFilteredNodes(query);
+    const filteredNodes = await this.getFilteredNodes(query);
 
     return filteredNodes.slice(from, from + size);
   }
@@ -195,7 +195,7 @@ export class NodeService {
   }
 
   private processQueuedNodes(nodes: Node[], queue: Queue[]) {
-    for (let queueItem of queue) {
+    for (const queueItem of queue) {
       const node = nodes.find((node) => node.bls === queueItem.bls);
 
       if (node) {
@@ -203,7 +203,7 @@ export class NodeService {
         node.status = NodeStatus.queued;
         node.position = queueItem.position;
       } else {
-        let newNode = new Node();
+        const newNode = new Node();
         newNode.bls = queueItem.bls;
         newNode.position = queueItem.position;
         newNode.type = NodeType.validator;
@@ -219,7 +219,7 @@ export class NodeService {
       await this.keybaseService.getCachedNodeKeybases();
 
     if (keybases) {
-      for (let node of nodes) {
+      for (const node of nodes) {
         node.identity = undefined;
 
         if (keybases[node.bls] && keybases[node.bls].confirmed) {
@@ -236,7 +236,7 @@ export class NodeService {
     const epoch = await this.blockService.getCurrentEpoch();
     const owners = await this.getOwners(blses, epoch);
 
-    for (let [index, bls] of blses.entries()) {
+    for (const [index, bls] of blses.entries()) {
       const node = nodes.find((node) => node.bls === bls);
       if (node) {
         node.owner = owners[index];
@@ -245,7 +245,7 @@ export class NodeService {
 
     const providers = await this.providerService.getAllProviders();
 
-    for (let node of nodes) {
+    for (const node of nodes) {
       if (node.type === NodeType.validator) {
         const provider = providers.find(
           ({ provider }) => provider === node.owner,
@@ -268,7 +268,7 @@ export class NodeService {
 
     const stakes = await this.stakeService.getStakes(addresses);
 
-    for (let node of nodes) {
+    for (const node of nodes) {
       if (node.type === 'validator') {
         const stake = stakes.find(({ bls }) => bls === node.bls);
 
@@ -282,8 +282,8 @@ export class NodeService {
   }
 
   async getAllNodesRaw(): Promise<Node[]> {
-    let nodes = await this.getHeartbeat();
-    let queue = await this.getQueue();
+    const nodes = await this.getHeartbeat();
+    const queue = await this.getQueue();
 
     this.processQueuedNodes(nodes, queue);
 
@@ -299,14 +299,14 @@ export class NodeService {
   async getOwners(blses: string[], epoch: number) {
     const keys = blses.map((bls) => `owner:${epoch}:${bls}`);
 
-    let cached = await this.cachingService.batchGetCache(keys);
+    const cached = await this.cachingService.batchGetCache(keys);
 
     const missing = cached
       .map((element, index) => (element === null ? index : false))
       .filter((element) => element !== false)
       .map((element) => element as number);
 
-    let owners: any = {};
+    const owners: any = {};
 
     if (missing.length) {
       for (const index of missing) {
@@ -343,7 +343,7 @@ export class NodeService {
   }
 
   async getBlsOwner(bls: string): Promise<string | undefined> {
-    let result = await this.vmQueryService.vmQuery(
+    const result = await this.vmQueryService.vmQuery(
       this.apiConfigService.getStakingContractAddress(),
       'getOwner',
       this.apiConfigService.getAuctionContractAddress(),
@@ -437,7 +437,7 @@ export class NodeService {
       this.gatewayService.get('network/config'),
     ]);
 
-    let nodes: Node[] = [];
+    const nodes: Node[] = [];
 
     const blses = [
       ...new Set([
@@ -488,7 +488,7 @@ export class NodeService {
       let nodeType: NodeType | undefined = undefined;
       let nodeStatus: NodeStatus | undefined = undefined;
 
-      let status = validatorStatus ? validatorStatus : peerType;
+      const status = validatorStatus ? validatorStatus : peerType;
       nodeStatus = status;
 
       if (status === 'observer') {

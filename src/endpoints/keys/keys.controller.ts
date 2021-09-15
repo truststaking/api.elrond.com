@@ -28,7 +28,7 @@ export class KeysController {
   async getKeyUnbondPeriod(
     @Param('key') key: string,
   ): Promise<KeyUnbondPeriod> {
-    let result = await this.keysService.getKeyUnbondPeriod(key);
+    const result = await this.keysService.getKeyUnbondPeriod(key);
     if (!result) {
       throw new HttpException('Key not found', HttpStatus.NOT_FOUND);
     }

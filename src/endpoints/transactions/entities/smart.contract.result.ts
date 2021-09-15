@@ -3,40 +3,40 @@ import { TransactionLog } from './transaction.log';
 
 export class SmartContractResult {
   @ApiProperty()
-  hash: string = '';
+  hash = '';
 
   @ApiProperty()
-  nonce: number = 0;
+  nonce = 0;
 
   @ApiProperty()
-  gasLimit: number = 0;
+  gasLimit = 0;
 
   @ApiProperty()
-  gasPrice: number = 0;
+  gasPrice = 0;
 
   @ApiProperty()
-  value: string = '';
+  value = '';
 
   @ApiProperty()
-  sender: string = '';
+  sender = '';
 
   @ApiProperty()
-  receiver: string = '';
+  receiver = '';
 
   @ApiProperty()
-  relayedValue: string = '';
+  relayedValue = '';
 
   @ApiProperty()
-  data: string = '';
+  data = '';
 
   @ApiProperty()
-  prevTxHash: string = '';
+  prevTxHash = '';
 
   @ApiProperty()
-  originalTxHash: string = '';
+  originalTxHash = '';
 
   @ApiProperty()
-  callType: string = '';
+  callType = '';
 
   @ApiProperty({ type: TransactionLog })
   logs: TransactionLog | undefined = undefined;

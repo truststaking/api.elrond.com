@@ -27,23 +27,23 @@ describe.skip('Token Service', () => {
 
     tokenService = moduleRef.get<TokenService>(TokenService);
 
-    let nfts = await tokenService.getNfts(
+    const nfts = await tokenService.getNfts(
       { from: 0, size: 1 },
       new NftFilter(),
     );
     expect(nfts).toHaveLength(1);
 
-    let nft = nfts[0];
+    const nft = nfts[0];
     nftCreator = nft.creator;
     nftIdentifier = nft.identifier;
 
-    let tokens = await tokenService.getTokens(
+    const tokens = await tokenService.getTokens(
       { from: 0, size: 1 },
       new TokenFilter(),
     );
     expect(tokens).toHaveLength(1);
 
-    let token = tokens[0];
+    const token = tokens[0];
     tokenName = token.name;
     tokenIdentifier = token.identifier;
   });
@@ -59,7 +59,7 @@ describe.skip('Token Service', () => {
         expect(tokensList).toBeInstanceOf(Array);
         expect(tokensList).toHaveLength(25);
 
-        for (let token of tokensList) {
+        for (const token of tokensList) {
           expect(token).toHaveStructure(Object.keys(new TokenDetailed()));
         }
       });
@@ -72,7 +72,7 @@ describe.skip('Token Service', () => {
         expect(tokensList).toBeInstanceOf(Array);
         expect(tokensList).toHaveLength(10);
 
-        for (let token of tokensList) {
+        for (const token of tokensList) {
           expect(token).toHaveStructure(Object.keys(new TokenDetailed()));
         }
       });
@@ -86,7 +86,7 @@ describe.skip('Token Service', () => {
         );
         expect(tokensList).toBeInstanceOf(Array);
 
-        for (let token of tokensList) {
+        for (const token of tokensList) {
           expect(token).toHaveStructure(Object.keys(new TokenDetailed()));
           expect(token.name).toBe(tokenName);
         }
@@ -96,7 +96,7 @@ describe.skip('Token Service', () => {
 
   describe('Token count', () => {
     it(`should return a number`, async () => {
-      const tokensCount: Number = new Number(
+      const tokensCount: number = new Number(
         await tokenService.getTokenCount(new TokenFilter()),
       );
 
@@ -132,7 +132,7 @@ describe.skip('Token Service', () => {
         expect(nftsList).toBeInstanceOf(Array);
         expect(nftsList).toHaveLength(25);
 
-        for (let nft of nftsList) {
+        for (const nft of nftsList) {
           expect(nft).toHaveStructure(Object.keys(new Nft()));
         }
       });
@@ -145,7 +145,7 @@ describe.skip('Token Service', () => {
         expect(nftsList).toBeInstanceOf(Array);
         expect(nftsList).toHaveLength(10);
 
-        for (let nft of nftsList) {
+        for (const nft of nftsList) {
           expect(nft).toHaveStructure(Object.keys(new Nft()));
 
           expect(nft.creator).toBeDefined();
@@ -164,7 +164,7 @@ describe.skip('Token Service', () => {
         );
         expect(nftsList).toBeInstanceOf(Array);
 
-        for (let nft of nftsList) {
+        for (const nft of nftsList) {
           expect(nft).toHaveStructure(Object.keys(new Nft()));
           expect(nft.identifier).toBe(tokenIdentifier);
         }
@@ -179,7 +179,7 @@ describe.skip('Token Service', () => {
         );
         expect(nftsList).toBeInstanceOf(Array);
 
-        for (let nft of nftsList) {
+        for (const nft of nftsList) {
           expect(nft).toHaveStructure(Object.keys(new Nft()));
           expect(nft.type).toBe(NftType.SemiFungibleESDT);
         }
@@ -194,7 +194,7 @@ describe.skip('Token Service', () => {
         );
         expect(nftsList).toBeInstanceOf(Array);
 
-        for (let nft of nftsList) {
+        for (const nft of nftsList) {
           expect(nft).toHaveStructure(Object.keys(new Nft()));
           expect(nft.creator).toBe(nftCreator);
         }
@@ -204,7 +204,7 @@ describe.skip('Token Service', () => {
 
   describe('Nft count', () => {
     it(`should return a number`, async () => {
-      const nftCount: Number = new Number(
+      const nftCount: number = new Number(
         await tokenService.getNftCount(new NftFilter()),
       );
 

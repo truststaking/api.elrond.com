@@ -36,7 +36,7 @@ export class CacheWarmerService {
     await Locker.lock(
       'Nodes invalidations',
       async () => {
-        let nodes = await this.nodeService.getAllNodesRaw();
+        const nodes = await this.nodeService.getAllNodesRaw();
         await this.invalidateKey('nodes', nodes, Constants.oneHour());
       },
       true,
@@ -48,7 +48,7 @@ export class CacheWarmerService {
     await Locker.lock(
       'Tokens invalidations',
       async () => {
-        let tokens = await this.tokenService.getAllTokensRaw();
+        const tokens = await this.tokenService.getAllTokensRaw();
         await this.invalidateKey('allTokens', tokens, Constants.oneHour());
       },
       true,
@@ -60,7 +60,7 @@ export class CacheWarmerService {
     await Locker.lock(
       'Identities invalidations',
       async () => {
-        let identities = await this.identitiesService.getAllIdentitiesRaw();
+        const identities = await this.identitiesService.getAllIdentitiesRaw();
         await this.invalidateKey(
           'identities',
           identities,
@@ -76,7 +76,7 @@ export class CacheWarmerService {
     await Locker.lock(
       'Providers invalidations',
       async () => {
-        let providers = await this.providerService.getAllProvidersRaw();
+        const providers = await this.providerService.getAllProvidersRaw();
         await this.invalidateKey('providers', providers, Constants.oneHour());
       },
       true,
@@ -88,11 +88,11 @@ export class CacheWarmerService {
     await Locker.lock(
       'Keybase invalidations',
       async () => {
-        let nodeKeybases =
+        const nodeKeybases =
           await this.keybaseService.confirmKeybaseNodesAgainstKeybasePub();
-        let providerKeybases =
+        const providerKeybases =
           await this.keybaseService.confirmKeybaseProvidersAgainstKeybasePub();
-        let identityKeybases =
+        const identityKeybases =
           await this.keybaseService.getIdentitiesProfilesAgainstKeybasePub();
         await Promise.all([
           this.invalidateKey('nodeKeybases', nodeKeybases, Constants.oneHour()),
@@ -118,7 +118,7 @@ export class CacheWarmerService {
       await Locker.lock(
         'Current price invalidations',
         async () => {
-          let currentPrice =
+          const currentPrice =
             await this.dataApiService.getQuotesHistoricalLatest(
               DataQuoteType.price,
             );
@@ -138,7 +138,7 @@ export class CacheWarmerService {
     await Locker.lock(
       'Economics invalidations',
       async () => {
-        let economics = await this.networkService.getEconomics();
+        const economics = await this.networkService.getEconomics();
         await this.invalidateKey(
           'economics',
           economics,
@@ -154,7 +154,7 @@ export class CacheWarmerService {
     await Locker.lock(
       'Accounts invalidations',
       async () => {
-        let accounts = await this.accountService.getAccounts({
+        const accounts = await this.accountService.getAccounts({
           from: 0,
           size: 25,
         });

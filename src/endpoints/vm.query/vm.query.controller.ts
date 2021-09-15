@@ -35,7 +35,7 @@ export class VmQueryController {
       return;
     }
 
-    let data = result.data.data;
+    const data = result.data.data;
     if (data.returnData !== null) {
       res.status(HttpStatus.OK).json(data);
     } else {

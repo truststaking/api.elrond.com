@@ -59,7 +59,7 @@ export class ProviderController {
     description: 'Provider not found',
   })
   async getProvider(@Param('address') address: string): Promise<Provider> {
-    let provider = await this.providerService.getProvider(address);
+    const provider = await this.providerService.getProvider(address);
     if (provider === undefined) {
       throw new HttpException(
         `Provider '${address}' not found`,

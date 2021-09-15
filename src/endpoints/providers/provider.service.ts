@@ -32,8 +32,8 @@ export class ProviderService {
   }
 
   async getProvider(address: string): Promise<Provider | undefined> {
-    let query = new ProviderFilter();
-    let providers = await this.getProviders(query);
+    const query = new ProviderFilter();
+    const providers = await this.getProviders(query);
 
     return providers.find((x) => x.provider === address);
   }
@@ -69,13 +69,13 @@ export class ProviderService {
 
   async getProviders(query: ProviderFilter): Promise<Provider[]> {
     let providers = await this.getAllProviders();
-    let nodes = await this.nodeService.getAllNodes();
+    const nodes = await this.nodeService.getAllNodes();
 
-    let nodesGroupedByProvider: { [key: string]: any[] } = nodes.groupBy(
+    const nodesGroupedByProvider: { [key: string]: any[] } = nodes.groupBy(
       (x) => x.provider,
     );
 
-    let providersDelegationData: DelegationData[] =
+    const providersDelegationData: DelegationData[] =
       await this.getDelegationProviders();
 
     providers.forEach((element) => {
@@ -118,9 +118,9 @@ export class ProviderService {
     }
 
     providers.sort((a, b) => {
-      let aSort =
+      const aSort =
         a.locked && a.locked !== '0' ? parseInt(a.locked.slice(0, -18)) : 0;
-      let bSort =
+      const bSort =
         b.locked && b.locked !== '0' ? parseInt(b.locked.slice(0, -18)) : 0;
 
       return bSort - aSort;
@@ -201,7 +201,7 @@ export class ProviderService {
       };
     });
 
-    let providerKeybases = await this.cachingService.getOrSetCache<{
+    const providerKeybases = await this.cachingService.getOrSetCache<{
       [key: string]: KeybaseState;
     }>(
       'providerKeybases',
@@ -211,8 +211,8 @@ export class ProviderService {
     );
 
     if (providerKeybases) {
-      for (let providerAddress of providers) {
-        let providerInfo = providerKeybases[providerAddress];
+      for (const providerAddress of providers) {
+        const providerInfo = providerKeybases[providerAddress];
 
         if (providerInfo && providerInfo.confirmed) {
           const found = providersRaw.find(
@@ -254,7 +254,7 @@ export class ProviderService {
   }
 
   async getProviderConfig(address: string): Promise<ProviderConfig> {
-    let [
+    const [
       ownerBase64,
       serviceFeeBase64,
       delegationCapBase64,
@@ -289,7 +289,7 @@ export class ProviderService {
     //   checkCapOnredelegateBase64,
     // ].map((base64) => (Buffer.from(base64, 'base64').toString() === 'true' ? true : false));
 
-    let serviceFeeString = String(parseInt(serviceFee ?? '0') / 10000);
+    const serviceFeeString = String(parseInt(serviceFee ?? '0') / 10000);
 
     return {
       owner,

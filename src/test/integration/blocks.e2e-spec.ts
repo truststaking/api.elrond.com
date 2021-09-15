@@ -30,7 +30,7 @@ describe('Blocks Service', () => {
 
   describe('Blocks', () => {
     it('blocks should have hash, epoch and shard', async () => {
-      for (let block of blocks) {
+      for (const block of blocks) {
         expect(block).toHaveProperty('hash');
         expect(block).toHaveProperty('epoch');
         expect(block).toHaveProperty('shard');
@@ -38,7 +38,7 @@ describe('Blocks Service', () => {
     });
 
     it('all entities should have block structure', async () => {
-      for (let block of blocks) {
+      for (const block of blocks) {
         expect(block).toHaveStructure(Object.keys(new Block()));
       }
     });
@@ -65,7 +65,7 @@ describe('Blocks Service', () => {
         size: 25,
       });
 
-      for (let block of filteredBlocks) {
+      for (const block of filteredBlocks) {
         expect(block.shard).toStrictEqual(2);
         expect(block.epoch).toStrictEqual(396);
       }

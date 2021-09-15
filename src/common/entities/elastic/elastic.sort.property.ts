@@ -1,6 +1,6 @@
 import { ElasticSortOrder } from './elastic.sort.order';
 
 export class ElasticSortProperty {
-  name: string = '';
+  name = '';
   order: ElasticSortOrder | undefined = undefined;
 }

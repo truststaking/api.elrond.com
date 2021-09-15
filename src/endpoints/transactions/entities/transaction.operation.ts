@@ -6,13 +6,13 @@ export class TransactionOperation {
 
   type: TransactionOperationType = TransactionOperationType.none;
 
-  identifier: string = '';
+  identifier = '';
 
   collection?: string;
 
-  value: string = '';
+  value = '';
 
-  sender: string = '';
+  sender = '';
 
-  receiver: string = '';
+  receiver = '';
 }

@@ -17,11 +17,11 @@ export class FieldsInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap(async (result) => {
-        let fieldsArgument = request.query.fields;
+        const fieldsArgument = request.query.fields;
         if (fieldsArgument) {
-          let fields = fieldsArgument.split(',');
+          const fields = fieldsArgument.split(',');
           if (Array.isArray(result)) {
-            for (let item of result) {
+            for (const item of result) {
               this.transformItem(item, fields);
             }
           } else {
@@ -35,7 +35,7 @@ export class FieldsInterceptor implements NestInterceptor {
   }
 
   private transformItem(item: any, fields: string[]) {
-    for (let key of Object.keys(item)) {
+    for (const key of Object.keys(item)) {
       if (!fields.includes(key)) {
         delete item[key];
       }

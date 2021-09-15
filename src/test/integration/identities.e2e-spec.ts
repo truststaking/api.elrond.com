@@ -24,7 +24,7 @@ describe('Identities Service', () => {
 
   describe('Identities', () => {
     it('all identities should have provider stake, topUp and locked', async () => {
-      for (let identity of identities) {
+      for (const identity of identities) {
         expect(identity).toHaveProperty('stake');
         expect(identity).toHaveProperty('topUp');
         expect(identity).toHaveProperty('locked');
@@ -46,10 +46,10 @@ describe('Identities Service', () => {
     });
 
     it('should distribution sum be 1', async () => {
-      for (let identity of identities) {
+      for (const identity of identities) {
         if (identity.distribution) {
           let sum = 0;
-          for (let distribution of Object.values(identity.distribution)) {
+          for (const distribution of Object.values(identity.distribution)) {
             sum += distribution;
           }
 

@@ -100,7 +100,7 @@ export class AccountController {
   async getAccountDetails(
     @Param('address') address: string,
   ): Promise<AccountDetailed> {
-    let account = await this.accountService.getAccount(address);
+    const account = await this.accountService.getAccount(address);
     if (!account) {
       throw new HttpException('Account not found', HttpStatus.NOT_FOUND);
     }
@@ -291,7 +291,7 @@ export class AccountController {
     @Param('address') address: string,
     @Param('token') token: string,
   ): Promise<TokenWithBalance> {
-    let result = await this.tokenService.getTokenForAddress(address, token);
+    const result = await this.tokenService.getTokenForAddress(address, token);
     if (!result) {
       throw new HttpException(
         'Token for given account not found',
@@ -503,7 +503,7 @@ export class AccountController {
     @Param('address') address: string,
     @Param('nft') nft: string,
   ): Promise<NftAccount> {
-    let result = await this.tokenService.getNftForAddress(address, nft);
+    const result = await this.tokenService.getNftForAddress(address, nft);
     if (!result) {
       throw new HttpException(
         'Token for given account not found',

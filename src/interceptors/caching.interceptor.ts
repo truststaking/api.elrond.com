@@ -24,18 +24,19 @@ export class CachingInterceptor implements NestInterceptor {
     context: ExecutionContext,
     next: CallHandler,
   ): Promise<Observable<any>> {
-    let apiFunction = context.getClass().name + '.' + context.getHandler().name;
+    const apiFunction =
+      context.getClass().name + '.' + context.getHandler().name;
 
-    let cacheKey = this.getCacheKey(context);
+    const cacheKey = this.getCacheKey(context);
     if (cacheKey) {
-      let pendingRequest = this.pendingRequestsDictionary[cacheKey];
+      const pendingRequest = this.pendingRequestsDictionary[cacheKey];
       if (pendingRequest) {
-        let result = await pendingRequest;
+        const result = await pendingRequest;
         this.metricsService.incrementPendingApiHit(apiFunction);
         return of(result);
       }
 
-      let cachedValue = await this.cachingService.getCacheLocal(cacheKey);
+      const cachedValue = await this.cachingService.getCacheLocal(cacheKey);
       if (cachedValue) {
         this.metricsService.incrementCachedApiHit(apiFunction);
         return of(cachedValue);
@@ -58,10 +59,10 @@ export class CachingInterceptor implements NestInterceptor {
           delete this.pendingRequestsDictionary[cacheKey ?? ''];
           pendingRequestResolver(result);
 
-          let ttl =
+          const ttl =
             await this.cachingService.getSecondsRemainingUntilNextRound();
 
-          await this.cachingService.setCacheLocal(cacheKey!!, result, ttl);
+          await this.cachingService.setCacheLocal(cacheKey!, result, ttl);
         }),
         catchError((err) => {
           delete this.pendingRequestsDictionary[cacheKey ?? ''];

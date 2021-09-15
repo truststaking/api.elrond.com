@@ -29,7 +29,7 @@ export class DelegationService {
       'getContractConfig',
     );
 
-    let nodes = await this.nodeService.getAllNodes();
+    const nodes = await this.nodeService.getAllNodes();
     let providerAddresses = nodes.map((node) =>
       node.provider ? node.provider : node.owner,
     );
@@ -37,7 +37,7 @@ export class DelegationService {
     providerAddresses = [...new Set(providerAddresses)];
 
     const minDelegationHex = Buffer.from(
-    // @ts-ignore
+      // @ts-ignore
       configsBase64.pop(),
       'base64',
     ).toString('hex');

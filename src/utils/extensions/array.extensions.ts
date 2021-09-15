@@ -17,9 +17,9 @@ Array.prototype.groupBy = function (predicate: Function, asArray = false) {
 };
 
 Array.prototype.selectMany = function (predicate: Function) {
-  let result = [];
+  const result = [];
 
-  for (let item of this) {
+  for (const item of this) {
     result.push(...predicate(item));
   }
 
@@ -49,7 +49,7 @@ Array.prototype.zip = function <TSecond, TResult>(
 };
 
 Array.prototype.remove = function <T>(element: T): number {
-  let index = this.indexOf(element);
+  const index = this.indexOf(element);
   if (index >= 0) {
     this.splice(index, 1);
   }

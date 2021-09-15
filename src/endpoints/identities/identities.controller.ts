@@ -30,7 +30,7 @@ export class IdentitiesController {
   async getIdentities(
     @Query('identities') identities: string | undefined,
   ): Promise<Identity[]> {
-    let identityArray = identities ? identities.split(',') : [];
+    const identityArray = identities ? identities.split(',') : [];
 
     return await this.identitiesService.getIdentities(identityArray);
   }
@@ -48,7 +48,7 @@ export class IdentitiesController {
   async getIdentity(
     @Param('identifier') identifier: string,
   ): Promise<Identity> {
-    let identity = await this.identitiesService.getIdentity(identifier);
+    const identity = await this.identitiesService.getIdentity(identifier);
     if (identity === undefined) {
       throw new HttpException('Identity not found', HttpStatus.NOT_FOUND);
     }

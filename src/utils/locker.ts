@@ -4,12 +4,8 @@ import { PerformanceProfiler } from './performance.profiler';
 export class Locker {
   private static lockArray: string[] = [];
 
-  static async lock(
-    key: string,
-    func: () => Promise<void>,
-    log: boolean = false,
-  ) {
-    let logger = new Logger('Lock');
+  static async lock(key: string, func: () => Promise<void>, log = false) {
+    const logger = new Logger('Lock');
 
     if (Locker.lockArray.includes(key)) {
       logger.log(`${key} is already running`);
@@ -18,7 +14,7 @@ export class Locker {
 
     Locker.lockArray.push(key);
 
-    let profiler = new PerformanceProfiler();
+    const profiler = new PerformanceProfiler();
 
     try {
       await func();

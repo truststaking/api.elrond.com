@@ -3,17 +3,17 @@ import { TokenAssetStatus } from './token.asset.status';
 
 export class TokenAssets {
   @ApiProperty()
-  website: string = '';
+  website = '';
 
   @ApiProperty()
-  description: string = '';
+  description = '';
 
   @ApiProperty()
   status: TokenAssetStatus = TokenAssetStatus.inactive;
 
   @ApiProperty()
-  pngUrl: string = '';
+  pngUrl = '';
 
   @ApiProperty()
-  svgUrl: string = '';
+  svgUrl = '';
 }

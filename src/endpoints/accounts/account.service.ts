@@ -59,9 +59,11 @@ export class AccountService {
         this.gatewayService.get(`address/${address}`),
       ]);
 
-      let shard = AddressUtils.computeShard(AddressUtils.bech32Decode(address));
+      const shard = AddressUtils.computeShard(
+        AddressUtils.bech32Decode(address),
+      );
 
-      let result = {
+      const result = {
         address,
         nonce,
         balance,
@@ -107,16 +109,16 @@ export class AccountService {
     };
     elasticQueryAdapter.sort = [balanceNum];
 
-    let result = await this.elasticService.getList(
+    const result = await this.elasticService.getList(
       'accounts',
       'address',
       elasticQueryAdapter,
     );
 
-    let accounts: Account[] = result.map((item) =>
+    const accounts: Account[] = result.map((item) =>
       ApiUtils.mergeObjects(new Account(), item),
     );
-    for (let account of accounts) {
+    for (const account of accounts) {
       account.shard = AddressUtils.computeShard(
         AddressUtils.bech32Decode(account.address),
       );
@@ -128,7 +130,7 @@ export class AccountService {
   async getDeferredAccount(address: string): Promise<AccountDeferred[]> {
     const publicKey = AddressUtils.bech32Decode(address);
 
-    let [
+    const [
       encodedUserDeferredPaymentList,
       [encodedNumBlocksBeforeUnBond],
       {
@@ -189,7 +191,7 @@ export class AccountService {
   ): Promise<
     { blsKey: string; stake: string; status: string; rewardAddress: string }[]
   > {
-    let publicKey = AddressUtils.bech32Decode(address);
+    const publicKey = AddressUtils.bech32Decode(address);
 
     const BlsKeysStatus = await this.vmQueryService.vmQuery(
       this.apiConfigService.getAuctionContractAddress(),
@@ -237,7 +239,7 @@ export class AccountService {
       ).toString();
       const rewardAddress = AddressUtils.bech32Encode(rewardsPublicKey);
 
-      for (let [index, _] of data.entries()) {
+      for (const [index, _] of data.entries()) {
         data[index].rewardAddress = rewardAddress;
       }
     }

@@ -172,7 +172,7 @@ export class ProxyController {
   })
   async queryLegacy(@Body() query: VmQueryRequest, @Res() res: Response) {
     try {
-      let result = await this.vmQueryService.vmQueryFullResult(
+      const result = await this.vmQueryService.vmQueryFullResult(
         query.scAddress,
         query.funcName,
         query.caller,
@@ -295,7 +295,7 @@ export class ProxyController {
     }
 
     try {
-      let result = await this.gatewayService.getRaw(url);
+      const result = await this.gatewayService.getRaw(url);
       res.json(result.data);
     } catch (error) {
       res.status(HttpStatus.BAD_REQUEST).json(error.response.data).send();
@@ -304,7 +304,7 @@ export class ProxyController {
 
   private async gatewayPost(@Res() res: Response, url: string, data: any) {
     try {
-      let result = await this.gatewayService.createRaw(url, data);
+      const result = await this.gatewayService.createRaw(url, data);
       res.json(result.data);
     } catch (error) {
       res.status(HttpStatus.BAD_REQUEST).json(error.response.data).send();

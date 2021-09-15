@@ -28,12 +28,12 @@ describe('Transaction Service', () => {
     transactionFilter.from = 0;
     transactionFilter.size = 1;
 
-    let transactions = await transactionService.getTransactions(
+    const transactions = await transactionService.getTransactions(
       transactionFilter,
     );
     expect(transactions).toHaveLength(1);
 
-    let transaction = transactions[0];
+    const transaction = transactions[0];
     transactionHash = transaction.txHash;
     transactionSender = transaction.sender;
     transactionReceiver = transaction.receiver;
@@ -48,7 +48,7 @@ describe('Transaction Service', () => {
         transactionFilter,
       );
 
-      for (let transaction of transactionsList) {
+      for (const transaction of transactionsList) {
         expect(transaction).toHaveProperty('txHash');
         expect(transaction).toHaveProperty('sender');
         expect(transaction).toHaveProperty('receiver');
@@ -67,7 +67,7 @@ describe('Transaction Service', () => {
         expect(transactionsList).toBeInstanceOf(Array);
         expect(transactionsList).toHaveLength(25);
 
-        for (let transaction of transactionsList) {
+        for (const transaction of transactionsList) {
           expect(transaction).toHaveStructure(Object.keys(new Transaction()));
         }
       });
@@ -83,7 +83,7 @@ describe('Transaction Service', () => {
         expect(transactionsList).toBeInstanceOf(Array);
         expect(transactionsList).toHaveLength(100);
 
-        for (let transaction of transactionsList) {
+        for (const transaction of transactionsList) {
           expect(transaction).toHaveStructure(Object.keys(new Transaction()));
         }
       });
@@ -102,7 +102,7 @@ describe('Transaction Service', () => {
 
         expect(transactionsList).toBeInstanceOf(Array);
 
-        for (let transaction of transactionsList) {
+        for (const transaction of transactionsList) {
           expect(transaction).toHaveStructure(Object.keys(new Transaction()));
           expect(transaction.sender).toBe(transactionSender);
           expect(transaction.receiver).toBe(transactionReceiver);
@@ -119,7 +119,7 @@ describe('Transaction Service', () => {
         );
         expect(transactionsList).toBeInstanceOf(Array);
 
-        for (let transaction of transactionsList) {
+        for (const transaction of transactionsList) {
           expect(transaction).toHaveStructure(Object.keys(new Transaction()));
           expect(transaction.status).toBe(TransactionStatus.pending);
         }
@@ -136,7 +136,7 @@ describe('Transaction Service', () => {
         );
         expect(transactionsList).toBeInstanceOf(Array);
 
-        for (let transaction of transactionsList) {
+        for (const transaction of transactionsList) {
           expect(transaction).toHaveStructure(Object.keys(new Transaction()));
           expect(transaction.timestamp).toBeGreaterThanOrEqual(
             transactionFilter.after,
@@ -163,7 +163,7 @@ describe('Transaction Service', () => {
         );
         expect(transactionsList).toBeInstanceOf(Array);
 
-        for (let transaction of transactionsList) {
+        for (const transaction of transactionsList) {
           expect(transaction).toHaveStructure(Object.keys(new Transaction()));
           if (
             transaction.sender !== address &&
@@ -182,7 +182,7 @@ describe('Transaction Service', () => {
 
   describe('Transaction count', () => {
     it(`should return a number`, async () => {
-      const transactionsCount: Number = new Number(
+      const transactionsCount: number = new Number(
         await transactionService.getTransactionCount(new TransactionFilter()),
       );
 

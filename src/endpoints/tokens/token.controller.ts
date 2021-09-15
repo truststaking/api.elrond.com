@@ -124,7 +124,7 @@ export class TokenController {
   async getToken(
     @Param('identifier') identifier: string,
   ): Promise<TokenDetailed> {
-    let token = await this.tokenService.getToken(identifier);
+    const token = await this.tokenService.getToken(identifier);
     if (token === undefined) {
       throw new HttpException('Token not found', HttpStatus.NOT_FOUND);
     }
@@ -242,7 +242,7 @@ export class TokenController {
   async getNftCollection(
     @Param('collection') collection: string,
   ): Promise<NftCollection> {
-    let token = await this.tokenService.getNftCollection(collection);
+    const token = await this.tokenService.getNftCollection(collection);
     if (token === undefined) {
       throw new HttpException('NFT collection not found', HttpStatus.NOT_FOUND);
     }
@@ -424,7 +424,7 @@ export class TokenController {
     description: 'Token not found',
   })
   async getNft(@Param('identifier') identifier: string): Promise<Nft> {
-    let token = await this.tokenService.getSingleNft(identifier);
+    const token = await this.tokenService.getSingleNft(identifier);
     if (token === undefined) {
       throw new HttpException('NFT not found', HttpStatus.NOT_FOUND);
     }

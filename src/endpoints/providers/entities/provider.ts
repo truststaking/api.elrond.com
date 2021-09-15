@@ -3,25 +3,25 @@ import { NodesInfos } from './nodes.infos';
 
 export class Provider extends NodesInfos {
   @ApiProperty()
-  provider: string = '';
+  provider = '';
 
   @ApiProperty()
   owner: string | null = null;
 
   @ApiProperty()
-  featured: boolean = false;
+  featured = false;
 
   @ApiProperty()
-  serviceFee: number = 0;
+  serviceFee = 0;
 
   @ApiProperty()
-  delegationCap: string = '';
+  delegationCap = '';
 
   @ApiProperty()
-  apr: number = 0;
+  apr = 0;
 
   @ApiProperty()
-  numUsers: number = 0;
+  numUsers = 0;
 
   @ApiProperty()
   cumulatedRewards: string | null = null;

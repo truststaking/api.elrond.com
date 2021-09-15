@@ -23,7 +23,7 @@ export class NftExtendedAttributesService {
   async getExtendedAttributesFromRawAttributes(
     attributes: string,
   ): Promise<NftMetadata | undefined> {
-    let metadata = this.getMetadata(attributes);
+    const metadata = this.getMetadata(attributes);
     if (metadata === undefined) {
       return undefined;
     }
@@ -34,7 +34,7 @@ export class NftExtendedAttributesService {
   async getExtendedAttributesFromMetadata(
     metadata: string,
   ): Promise<NftMetadata | undefined> {
-    let result = await this.cachingService.getOrSetCache<NftMetadata>(
+    const result = await this.cachingService.getOrSetCache<NftMetadata>(
       `nftExtendedAttributes:${metadata}`,
       async () => await this.getExtendedAttributesFromIpfs(metadata ?? ''),
       Constants.oneWeek(),
@@ -58,19 +58,19 @@ export class NftExtendedAttributesService {
   private async getExtendedAttributesFromIpfs(
     metadata: string,
   ): Promise<NftMetadata> {
-    let ipfsUri = `https://ipfs.io/ipfs/${metadata}`;
-    let processedIpfsUri = TokenUtils.computeNftUri(
+    const ipfsUri = `https://ipfs.io/ipfs/${metadata}`;
+    const processedIpfsUri = TokenUtils.computeNftUri(
       ipfsUri,
       this.NFT_THUMBNAIL_PREFIX,
     );
 
-    let result = await this.apiService.get(processedIpfsUri, 5000);
+    const result = await this.apiService.get(processedIpfsUri, 5000);
     return result.data;
   }
 
   getTags(attributes: string): string[] {
-    let decodedAttributes = BinaryUtils.base64Decode(attributes);
-    let match = decodedAttributes.match(/tags:(?<tags>[\w\s\,]*)/);
+    const decodedAttributes = BinaryUtils.base64Decode(attributes);
+    const match = decodedAttributes.match(/tags:(?<tags>[\w\s\,]*)/);
     if (!match || !match.groups) {
       return [];
     }
@@ -79,8 +79,8 @@ export class NftExtendedAttributesService {
   }
 
   private getMetadata(attributes: string): string | undefined {
-    let decodedAttributes = BinaryUtils.base64Decode(attributes);
-    let match = decodedAttributes.match(/metadata:(?<metadata>[\w]*)/);
+    const decodedAttributes = BinaryUtils.base64Decode(attributes);
+    const match = decodedAttributes.match(/metadata:(?<metadata>[\w]*)/);
     if (!match || !match.groups) {
       return undefined;
     }

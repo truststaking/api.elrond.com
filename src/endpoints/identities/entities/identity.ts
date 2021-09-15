@@ -26,7 +26,7 @@ export class Identity {
   topUp?: string;
 
   @ApiProperty()
-  locked: string = '0';
+  locked = '0';
 
   @ApiProperty()
   distribution?: { [index: string]: number } = {};

@@ -16,7 +16,7 @@ export class MetricsService {
   private static lastProcessedNonceGauge: Gauge<string>;
   private static pendingApiHitGauge: Gauge<string>;
   private static cachedApiHitGauge: Gauge<string>;
-  private static isDefaultMetricsRegistered: boolean = false;
+  private static isDefaultMetricsRegistered = false;
 
   constructor(
     private readonly apiConfigService: ApiConfigService,
@@ -146,8 +146,8 @@ export class MetricsService {
 
   async getMetrics(): Promise<string> {
     if (this.apiConfigService.getIsTransactionProcessorCronActive()) {
-      let currentNonces = await this.getCurrentNonces();
-      for (let [index, shardId] of this.shards.entries()) {
+      const currentNonces = await this.getCurrentNonces();
+      for (const [index, shardId] of this.shards.entries()) {
         MetricsService.currentNonceGauge.set({ shardId }, currentNonces[index]);
       }
     }
@@ -162,7 +162,9 @@ export class MetricsService {
   }
 
   async getCurrentNonce(shardId: number): Promise<number> {
-    let shardInfo = await this.gatewayService.get(`network/status/${shardId}`);
+    const shardInfo = await this.gatewayService.get(
+      `network/status/${shardId}`,
+    );
     return shardInfo.status.erd_nonce;
   }
 }

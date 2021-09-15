@@ -20,7 +20,7 @@ export class ShardService {
   async getShards(queryPagination: QueryPagination): Promise<Shard[]> {
     const { from, size } = queryPagination;
 
-    let allShards = await this.getAllShardsRaw();
+    const allShards = await this.getAllShardsRaw();
 
     return allShards.slice(from, from + size);
   }
@@ -34,7 +34,7 @@ export class ShardService {
   }
 
   async getAllShardsRaw(): Promise<Shard[]> {
-    let nodes = await this.nodeService.getAllNodes();
+    const nodes = await this.nodeService.getAllNodes();
 
     const validators = nodes.filter(
       ({ type, shard, status }) =>
@@ -50,7 +50,7 @@ export class ShardService {
         validators
           .map(({ shard }) => shard)
           .filter((shard) => shard !== undefined)
-          .map((shard) => shard!!),
+          .map((shard) => shard!),
       ),
     ];
 
@@ -69,7 +69,9 @@ export class ShardService {
   }
 
   async getCurrentNonce(shardId: number): Promise<number> {
-    let shardInfo = await this.gatewayService.get(`network/status/${shardId}`);
+    const shardInfo = await this.gatewayService.get(
+      `network/status/${shardId}`,
+    );
     return shardInfo.status.erd_nonce;
   }
 

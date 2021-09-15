@@ -130,7 +130,7 @@ export class NodeController {
     description: 'The node versions available on the blockchain',
   })
   async getNodeVersions(@Res() res: Response) {
-    let nodeVersions = await this.nodeService.getNodeVersions();
+    const nodeVersions = await this.nodeService.getNodeVersions();
 
     res.status(HttpStatus.OK).json(nodeVersions);
   }
@@ -256,7 +256,7 @@ export class NodeController {
     description: 'Node not found',
   })
   async getNode(@Param('bls') bls: string): Promise<Node> {
-    let provider = await this.nodeService.getNode(bls);
+    const provider = await this.nodeService.getNode(bls);
     if (provider === undefined) {
       throw new HttpException('Node not found', HttpStatus.NOT_FOUND);
     }

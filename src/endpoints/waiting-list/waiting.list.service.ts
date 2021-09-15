@@ -20,13 +20,13 @@ export class WaitingListService {
   }
 
   async getWaitingListForAddress(address: string): Promise<WaitingList[]> {
-    let fullWaitingList = await this.getFullWaitingList();
+    const fullWaitingList = await this.getFullWaitingList();
 
     return fullWaitingList.filter((x) => x.address === address);
   }
 
   async getWaitingListCount(): Promise<number> {
-    let fullWaitingList = await this.getFullWaitingList();
+    const fullWaitingList = await this.getFullWaitingList();
 
     return fullWaitingList.length;
   }
@@ -62,7 +62,7 @@ export class WaitingListService {
           const value = NumberUtils.numberDecode(valueEncoded);
           const nonce = parseInt(NumberUtils.numberDecode(nonceEncoded));
 
-          let waitingList: WaitingList = { address, value, nonce, rank: 0 };
+          const waitingList: WaitingList = { address, value, nonce, rank: 0 };
 
           // @ts-ignore
           result.push(waitingList);
@@ -73,7 +73,7 @@ export class WaitingListService {
       [],
     );
 
-    for (let [index, waitingListItem] of fullWaitingList.entries()) {
+    for (const [index, waitingListItem] of fullWaitingList.entries()) {
       waitingListItem.rank = index + 1;
     }
 

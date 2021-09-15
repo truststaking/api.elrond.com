@@ -34,7 +34,7 @@ describe('Node Service', () => {
 
   describe('Nodes', () => {
     it('all nodes should have bls and type', async () => {
-      for (let node of nodes) {
+      for (const node of nodes) {
         expect(node).toHaveProperty('bls');
         expect(node).toHaveProperty('type');
       }
@@ -46,7 +46,7 @@ describe('Node Service', () => {
       expect(nodeKeybases).toBeDefined();
 
       if (nodeKeybases) {
-        for (let node of nodes) {
+        for (const node of nodes) {
           if (nodeKeybases[node.bls] && nodeKeybases[node.bls].confirmed) {
             expect(node.identity).toStrictEqual(
               nodeKeybases[node.bls].identity,
@@ -66,7 +66,7 @@ describe('Node Service', () => {
         { from: 0, size: 25 },
         nodeFilter,
       );
-      for (let node of filteredNodes) {
+      for (const node of filteredNodes) {
         expect(node.bls).toStrictEqual(nodeSentinel.bls);
       }
 
@@ -75,7 +75,7 @@ describe('Node Service', () => {
         { from: 0, size: 25 },
         nodeFilter,
       );
-      for (let node of filteredNodes) {
+      for (const node of filteredNodes) {
         expect(node.version).toStrictEqual(nodeSentinel.version);
       }
     });
@@ -85,11 +85,11 @@ describe('Node Service', () => {
       nodeFilter.provider = nodeSentinel.provider;
       nodeFilter.owner = nodeSentinel.owner;
 
-      let filteredNodes = await nodeService.getNodes(
+      const filteredNodes = await nodeService.getNodes(
         { from: 0, size: 25 },
         nodeFilter,
       );
-      for (let node of filteredNodes) {
+      for (const node of filteredNodes) {
         expect(node.provider).toStrictEqual(nodeSentinel.provider);
         expect(node.owner).toStrictEqual(nodeSentinel.owner);
       }
@@ -99,11 +99,11 @@ describe('Node Service', () => {
       const nodeFilter: NodeFilter = new NodeFilter();
       nodeFilter.type = NodeType.validator;
 
-      let filteredNodes = await nodeService.getNodes(
+      const filteredNodes = await nodeService.getNodes(
         { from: 0, size: 25 },
         nodeFilter,
       );
-      for (let node of filteredNodes) {
+      for (const node of filteredNodes) {
         expect(node.type).toStrictEqual(NodeType.validator);
       }
     });
@@ -113,11 +113,11 @@ describe('Node Service', () => {
       nodeFilter.status = NodeStatus.eligible;
       nodeFilter.online = true;
 
-      let filteredNodes = await nodeService.getNodes(
+      const filteredNodes = await nodeService.getNodes(
         { from: 0, size: 25 },
         nodeFilter,
       );
-      for (let node of filteredNodes) {
+      for (const node of filteredNodes) {
         expect(node.status).toStrictEqual(NodeStatus.eligible);
         expect(node.online).toBeTruthy();
       }
@@ -127,12 +127,12 @@ describe('Node Service', () => {
       const nodeFilter: NodeFilter = new NodeFilter();
       nodeFilter.sort = NodeSort.uptime;
 
-      let filteredNodes = await nodeService.getNodes(
+      const filteredNodes = await nodeService.getNodes(
         { from: 0, size: 25 },
         nodeFilter,
       );
       let currentUptime = 0;
-      for (let node of filteredNodes) {
+      for (const node of filteredNodes) {
         if (node.uptime) {
           expect(node.uptime).toBeGreaterThanOrEqual(currentUptime);
           currentUptime = node.uptime;

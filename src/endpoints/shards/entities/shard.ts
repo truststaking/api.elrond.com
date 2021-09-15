@@ -2,11 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class Shard {
   @ApiProperty()
-  shard: number = 0;
+  shard = 0;
 
   @ApiProperty()
-  validators: number = 0;
+  validators = 0;
 
   @ApiProperty()
-  activeValidators: number = 0;
+  activeValidators = 0;
 }

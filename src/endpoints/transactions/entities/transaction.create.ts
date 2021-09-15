@@ -2,32 +2,32 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class TransactionCreate {
   @ApiProperty()
-  chainId: string = '';
+  chainId = '';
 
   @ApiProperty()
-  data: string = '';
+  data = '';
 
   @ApiProperty()
-  gasLimit: number = 0;
+  gasLimit = 0;
 
   @ApiProperty()
-  gasPrice: number = 0;
+  gasPrice = 0;
 
   @ApiProperty()
-  nonce: number = 0;
+  nonce = 0;
 
   @ApiProperty()
-  receiver: string = '';
+  receiver = '';
 
   @ApiProperty()
-  sender: string = '';
+  sender = '';
 
   @ApiProperty()
-  signature: string = '';
+  signature = '';
 
   @ApiProperty()
-  value: string = '';
+  value = '';
 
   @ApiProperty()
-  version: number = 0;
+  version = 0;
 }

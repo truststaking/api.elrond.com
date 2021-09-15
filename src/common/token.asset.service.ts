@@ -21,7 +21,7 @@ export class TokenAssetService {
 
   async checkout() {
     const localGitPath = 'dist/repos/assets';
-    let logger = this.logger;
+    const logger = this.logger;
     rimraf(localGitPath, function () {
       logger.log('done deleting');
 
@@ -52,9 +52,9 @@ export class TokenAssetService {
     tokenIdentifier: string,
     assetPath: string,
   ): TokenAssets {
-    let jsonPath = path.join(assetPath, 'info.json');
-    let jsonContents = fs.readFileSync(jsonPath);
-    let json = JSON.parse(jsonContents);
+    const jsonPath = path.join(assetPath, 'info.json');
+    const jsonContents = fs.readFileSync(jsonPath);
+    const json = JSON.parse(jsonContents);
 
     return {
       website: json.website,
@@ -78,7 +78,7 @@ export class TokenAssetService {
   }
 
   private getTokensRelativePath() {
-    let network = this.apiConfigService.getNetwork();
+    const network = this.apiConfigService.getNetwork();
     if (network !== 'mainnet') {
       return path.join(network, 'tokens');
     }
@@ -88,17 +88,17 @@ export class TokenAssetService {
 
   private async readAssets() {
     // read all folders from dist/repos/assets/tokens (token identifiers)
-    let tokensPath = this.getTokensPath();
+    const tokensPath = this.getTokensPath();
     if (!fs.existsSync(tokensPath)) {
       return await this.cachingService.setCacheLocal('tokenAssets', {});
     }
 
-    let tokenIdentifiers = FileUtils.getDirectories(tokensPath);
+    const tokenIdentifiers = FileUtils.getDirectories(tokensPath);
 
     // for every folder, create a TokenAssets entity with the contents of info.json and the urls from github
-    let assets: { [key: string]: TokenAssets } = {};
-    for (let tokenIdentifier of tokenIdentifiers) {
-      let tokenPath = path.join(tokensPath, tokenIdentifier);
+    const assets: { [key: string]: TokenAssets } = {};
+    for (const tokenIdentifier of tokenIdentifiers) {
+      const tokenPath = path.join(tokensPath, tokenIdentifier);
       assets[tokenIdentifier] = this.readAssetDetails(
         tokenIdentifier,
         tokenPath,
@@ -122,7 +122,7 @@ export class TokenAssetService {
 
   async getAssets(tokenIdentifier: string): Promise<TokenAssets> {
     // get the dictionary from the local cache
-    let assets = await this.getOrReadAssets();
+    const assets = await this.getOrReadAssets();
 
     // if the tokenIdentifier key exists in the dictionary, return the associated value, else undefined
     return assets[tokenIdentifier];

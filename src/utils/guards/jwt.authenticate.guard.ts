@@ -18,15 +18,15 @@ export class JwtAuthenticateGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
 
-    let authorization: string = request.headers['authorization'];
+    const authorization: string = request.headers['authorization'];
     if (!authorization) {
       return false;
     }
 
-    let jwt = authorization.replace('Bearer ', '');
+    const jwt = authorization.replace('Bearer ', '');
 
     try {
-      let jwtSecret = this.apiConfigService.getJwtSecret();
+      const jwtSecret = this.apiConfigService.getJwtSecret();
 
       request.jwt = await new Promise((resolve, reject) => {
         verify(jwt, jwtSecret, (err: any, decoded: any) => {

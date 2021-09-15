@@ -3,7 +3,7 @@ import { TransactionDetailed } from '../entities/transaction.detailed';
 import { PotentialScamTransactionChecker } from './potential-scam-transaction.checker';
 
 describe('PotentialScamTransactionChecker', () => {
-  let potentialScamTransactionChecker: PotentialScamTransactionChecker =
+  const potentialScamTransactionChecker: PotentialScamTransactionChecker =
     new PotentialScamTransactionChecker();
 
   it('empty data - returns false', async () => {

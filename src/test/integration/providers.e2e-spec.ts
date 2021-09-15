@@ -34,13 +34,13 @@ describe('Provider Service', () => {
 
   describe('Providers', () => {
     it('all providers should have provider address', async () => {
-      for (let provider of providers) {
+      for (const provider of providers) {
         expect(provider).toHaveProperty('provider');
       }
     });
 
     it('all entities should have provider structure', async () => {
-      for (let provider of providers) {
+      for (const provider of providers) {
         expect(provider).toHaveStructure(Object.keys(new Provider()));
       }
     });
@@ -50,7 +50,7 @@ describe('Provider Service', () => {
         await cachingService.getCache('providerKeybases');
       expect(providerKeybases).toBeDefined();
 
-      for (let provider of providers) {
+      for (const provider of providers) {
         if (providerKeybases) {
           if (
             providerKeybases[provider.provider] &&
@@ -86,7 +86,7 @@ describe('Provider Service', () => {
         providersFilter,
       );
 
-      for (let provider of identityProviders) {
+      for (const provider of identityProviders) {
         expect(provider.identity).toStrictEqual(identity);
       }
     });

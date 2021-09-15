@@ -282,7 +282,7 @@ export class TransactionController {
   async getTransaction(
     @Param('txHash') txHash: string,
   ): Promise<TransactionDetailed> {
-    let transaction = await this.transactionService.getTransaction(txHash);
+    const transaction = await this.transactionService.getTransaction(txHash);
     if (transaction === null) {
       throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
     }
@@ -299,7 +299,7 @@ export class TransactionController {
   async createTransaction(
     @Body() transaction: TransactionCreate,
   ): Promise<TransactionSendResult> {
-    let result = await this.transactionService.createTransaction(transaction);
+    const result = await this.transactionService.createTransaction(transaction);
 
     if (typeof result === 'string' || result instanceof String) {
       throw new HttpException(result, HttpStatus.BAD_REQUEST);

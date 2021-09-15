@@ -64,10 +64,10 @@ describe('Caching Service', () => {
   });
 
   describe('Batch process in chunks', () => {
-    let input: Array<Number> = [
+    const input: Array<number> = [
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ];
-    let output: Array<String> = [
+    const output: Array<string> = [
       '1',
       '2',
       '3',
@@ -84,9 +84,9 @@ describe('Caching Service', () => {
       '14',
       '15',
     ];
-    let emptyOutput: Array<any> = Array(15).fill(null);
-    let cacheKeyFunction = (number: Number) => number.toString();
-    let handlerFunction = async (number: Number) => await number.toString();
+    const emptyOutput: Array<any> = Array(15).fill(null);
+    const cacheKeyFunction = (number: number) => number.toString();
+    const handlerFunction = async (number: number) => await number.toString();
 
     it(`should return emptyOutput because keys aren't set`, async () => {
       const cacheValueChunks = await cachingService.batchGetCache(

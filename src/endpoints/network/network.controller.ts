@@ -46,7 +46,7 @@ export class NetworkController {
     description: 'Validator statistics',
   })
   async getValidatorStatistics() {
-    let statistics = await this.networkService.getValidatorStatistics();
+    const statistics = await this.networkService.getValidatorStatistics();
 
     return {
       code: 'successful',

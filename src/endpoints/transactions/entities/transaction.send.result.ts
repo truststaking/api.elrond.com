@@ -2,20 +2,20 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class TransactionSendResult {
   @ApiProperty()
-  receiver: string = '';
+  receiver = '';
 
   @ApiProperty()
-  receiverShard: number = 0;
+  receiverShard = 0;
 
   @ApiProperty()
-  sender: string = '';
+  sender = '';
 
   @ApiProperty()
-  senderShard: number = 0;
+  senderShard = 0;
 
   @ApiProperty()
-  status: string = '';
+  status = '';
 
   @ApiProperty()
-  txHash: string = '';
+  txHash = '';
 }

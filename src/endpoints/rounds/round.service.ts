@@ -78,13 +78,13 @@ export class RoundService {
     };
     elasticQueryAdapter.sort = [timestamp];
 
-    let result = await this.elasticService.getList(
+    const result = await this.elasticService.getList(
       'rounds',
       'round',
       elasticQueryAdapter,
     );
 
-    for (let item of result) {
+    for (const item of result) {
       item.shard = item.shardId;
     }
 

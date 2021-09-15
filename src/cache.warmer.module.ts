@@ -25,7 +25,7 @@ import { PublicAppModule } from './public.app.module';
     {
       provide: 'PUBSUB_SERVICE',
       useFactory: (apiConfigService: ApiConfigService) => {
-        let clientOptions: ClientOptions = {
+        const clientOptions: ClientOptions = {
           transport: Transport.REDIS,
           options: {
             url: `redis://${apiConfigService.getRedisUrl()}:6379`,

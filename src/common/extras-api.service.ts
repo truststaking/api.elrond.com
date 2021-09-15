@@ -31,7 +31,7 @@ export class ExtrasApiService {
     transactionMinInfoDto: ExtrasApiTransactionMinInfoDto,
   ): Promise<ExtrasApiScamTransactionResult | null> {
     try {
-      let result = await this.post(
+      const result = await this.post(
         'transactions/check-scam',
         transactionMinInfoDto,
       );

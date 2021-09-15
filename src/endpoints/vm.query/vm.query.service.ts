@@ -18,17 +18,17 @@ export class VmQueryService {
     contract: string,
     func: string,
   ): Promise<{ localTtl: number; remoteTtl: number }> {
-    let isCachingQueryFunction =
+    const isCachingQueryFunction =
       await this.cachingService.isCachingQueryFunction(contract, func);
-    let secondsRemainingUntilNextRound =
+    const secondsRemainingUntilNextRound =
       await this.cachingService.getSecondsRemainingUntilNextRound();
 
-    let localTtl = isCachingQueryFunction
+    const localTtl = isCachingQueryFunction
       ? Constants.oneHour()
       : secondsRemainingUntilNextRound;
 
     // no need to store value remotely just to evict it one second later
-    let remoteTtl = localTtl > 1 ? localTtl : 0;
+    const remoteTtl = localTtl > 1 ? localTtl : 0;
 
     return {
       localTtl,
@@ -66,7 +66,7 @@ export class VmQueryService {
     func: string,
     caller: string | undefined = undefined,
     args: string[] = [],
-    skipCache: boolean = false,
+    skipCache = false,
   ): Promise<string[]> {
     let key = `vm-query:${contract}:${func}`;
     if (caller) {
@@ -92,7 +92,7 @@ export class VmQueryService {
         );
       }
 
-      let data = result.data.data;
+      const data = result.data.data;
 
       return 'ReturnData' in data ? data.ReturnData : data.returnData;
     } catch (error) {
@@ -111,14 +111,14 @@ export class VmQueryService {
     caller: string | undefined,
     args: string[] = [],
   ): Promise<any> {
-    let payload = {
+    const payload = {
       scAddress: contract,
       FuncName: func,
       caller: caller,
       args: args,
     };
 
-    let result = await this.gatewayService.createRaw(
+    const result = await this.gatewayService.createRaw(
       'vm-values/query',
       payload,
     );

@@ -24,9 +24,9 @@ export class ApiService {
   private getConfig(timeout: number | undefined): AxiosRequestConfig {
     timeout = timeout || this.defaultTimeout;
 
-    let headers = {};
+    const headers = {};
 
-    let rateLimiterSecret = this.apiConfigService.getRateLimiterSecret();
+    const rateLimiterSecret = this.apiConfigService.getRateLimiterSecret();
     if (rateLimiterSecret) {
       // @ts-ignore
       headers['x-rate-limiter-secret'] = rateLimiterSecret;
@@ -55,7 +55,7 @@ export class ApiService {
   ): Promise<any> {
     timeout = timeout || this.defaultTimeout;
 
-    let profiler = new PerformanceProfiler();
+    const profiler = new PerformanceProfiler();
 
     try {
       return await axios.get(url, this.getConfig(timeout));
@@ -66,7 +66,7 @@ export class ApiService {
       }
 
       if (!handled) {
-        let logger = new Logger(ApiService.name);
+        const logger = new Logger(ApiService.name);
         logger.error({
           method: 'GET',
           url,
@@ -95,7 +95,7 @@ export class ApiService {
   ): Promise<any> {
     timeout = timeout || this.defaultTimeout;
 
-    let profiler = new PerformanceProfiler();
+    const profiler = new PerformanceProfiler();
 
     try {
       return await axios.post(url, data, this.getConfig(timeout));
@@ -106,7 +106,7 @@ export class ApiService {
       }
 
       if (!handled) {
-        let logger = new Logger(ApiService.name);
+        const logger = new Logger(ApiService.name);
         logger.error({
           method: 'POST',
           url,
@@ -135,7 +135,7 @@ export class ApiService {
   ): Promise<any> {
     timeout = timeout || this.defaultTimeout;
 
-    let profiler = new PerformanceProfiler();
+    const profiler = new PerformanceProfiler();
 
     try {
       return await axios.head(url, this.getConfig(timeout));
@@ -146,7 +146,7 @@ export class ApiService {
       }
 
       if (!handled) {
-        let logger = new Logger(ApiService.name);
+        const logger = new Logger(ApiService.name);
         logger.error({
           method: 'HEAD',
           url,

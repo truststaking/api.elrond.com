@@ -4,28 +4,28 @@ import { NodeType } from './node.type';
 
 export class Node {
   @ApiProperty()
-  bls: string = '';
+  bls = '';
 
   @ApiProperty()
-  name: string = '';
+  name = '';
 
   @ApiProperty()
-  version: string = '';
+  version = '';
 
   @ApiProperty()
-  rating: number = 0;
+  rating = 0;
 
   @ApiProperty()
-  tempRating: number = 0;
+  tempRating = 0;
 
   @ApiProperty()
-  ratingModifier: number = 0;
+  ratingModifier = 0;
 
   @ApiProperty()
-  uptimeSec: number = 0;
+  uptimeSec = 0;
 
   @ApiProperty()
-  downtimeSec: number = 0;
+  downtimeSec = 0;
 
   @ApiProperty()
   shard: number | undefined = undefined;
@@ -37,56 +37,56 @@ export class Node {
   status: NodeStatus | undefined = undefined;
 
   @ApiProperty()
-  online: boolean = false;
+  online = false;
 
   @ApiProperty()
-  nonce: number = 0;
+  nonce = 0;
 
   @ApiProperty()
-  instances: number = 0;
+  instances = 0;
 
   @ApiProperty()
-  uptime: number = 0;
+  uptime = 0;
 
   @ApiProperty()
-  downtime: number = 0;
+  downtime = 0;
 
   @ApiProperty()
-  owner: string = '';
+  owner = '';
 
   @ApiProperty()
   identity: string | undefined = undefined;
 
   @ApiProperty()
-  provider: string = '';
+  provider = '';
 
   @ApiProperty()
   issues: string[] = [];
 
   @ApiProperty()
-  stake: string = '';
+  stake = '';
 
   @ApiProperty()
-  topUp: string = '';
+  topUp = '';
 
   @ApiProperty()
-  locked: string = '';
+  locked = '';
 
   @ApiProperty()
-  leaderFailure: number = 0;
+  leaderFailure = 0;
 
   @ApiProperty()
-  leaderSuccess: number = 0;
+  leaderSuccess = 0;
 
   @ApiProperty()
-  validatorFailure: number = 0;
+  validatorFailure = 0;
 
   @ApiProperty()
-  validatorIgnoredSignatures: number = 0;
+  validatorIgnoredSignatures = 0;
 
   @ApiProperty()
-  validatorSuccess: number = 0;
+  validatorSuccess = 0;
 
   @ApiProperty()
-  position: number = 0;
+  position = 0;
 }
