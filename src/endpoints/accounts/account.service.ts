@@ -1536,25 +1536,27 @@ const calculateReward = async (
   return new Rewards();
 };
 
-const isOwner = async (agency: string, address: string) => {
+export const getAgencyOwner = async (agency: string) => {
   const provider = new ProxyProvider('https://gateway.elrond.com', {
     timeout: 20000,
   });
   const delegationContract = new SmartContract({
     address: new Address(agency),
   });
-  let reply = false;
+
   const response = await delegationContract.runQuery(provider, {
     func: new ContractFunction('getContractConfig'),
     args: [],
   });
   if (response.returnCode.toString() === 'ok') {
-    reply =
-      AddressUtils.bech32Encode(
-        Buffer.from(response.returnData[0], 'base64').toString('hex'),
-      ) == address;
-  } else {
-    console.log(response);
+    return AddressUtils.bech32Encode(
+      Buffer.from(response.returnData[0], 'base64').toString('hex'),
+    );
   }
-  return reply;
+
+  return false;
+}
+const isOwner = async (agency: string, address: string) => {
+  const owner = await getAgencyOwner(agency);
+  return owner == address;
 };
