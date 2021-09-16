@@ -64,7 +64,7 @@ export class ElasticService {
     return undefined;
   }
 
-  private formatItem(document: any, key: string) {
+  public formatItem(document: any, key: string) {
     const { _id, _source } = document;
     const item: any = {};
     item[key] = _id;
@@ -429,6 +429,22 @@ export class ElasticService {
     const elasticQuery = buildElasticQuery(elasticQueryAdapter);
 
     return await this.getDocuments('logs', elasticQuery);
+  }
+
+  async getSCResultsForTransactionHashes(
+    elasticQueryAdapter: ElasticQuery,
+  ): Promise<TransactionLog[]> {
+    const elasticQuery = buildElasticQuery(elasticQueryAdapter);
+
+    return await this.getDocuments('scresults', elasticQuery);
+  }
+
+  async getReceiptsForTransactionHashes(
+    elasticQueryAdapter: ElasticQuery,
+  ): Promise<TransactionLog[]> {
+    const elasticQuery = buildElasticQuery(elasticQueryAdapter);
+
+    return await this.getDocuments('receipts', elasticQuery);
   }
 
   public async get(url: string) {

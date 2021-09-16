@@ -32,6 +32,12 @@ import { TransactionOperationAction } from './entities/transaction.operation.act
 import { QueryOperator } from 'src/common/entities/elastic/query.operator';
 import { TransactionScamCheckService } from './scam-check/transaction-scam-check.service';
 import { TransactionScamInfo } from './entities/transaction-scam-info';
+import {
+  LogsMatch,
+  ReceiptsMatch,
+  ScResultsMatch,
+} from 'src/utils/trust.utils';
+import { NumberUtils } from 'src/utils/number.utils';
 
 @Injectable()
 export class TransactionService {
@@ -87,6 +93,238 @@ export class TransactionService {
     return queries;
   }
 
+  async getAllTransactions(
+    filter: TransactionFilter,
+  ): Promise<TransactionDetailed[]> {
+    const elasticQueryAdapter: ElasticQuery = new ElasticQuery();
+
+    const { from, size } = filter;
+    const pagination: ElasticPagination = {
+      from,
+      size,
+    };
+    elasticQueryAdapter.pagination = pagination;
+    elasticQueryAdapter.condition[
+      filter.condition ?? QueryConditionOptions.must
+    ] = this.buildTransactionFilterQuery(filter);
+
+    const timestamp: ElasticSortProperty = {
+      name: 'timestamp',
+      order: ElasticSortOrder.descending,
+    };
+    const nonce: ElasticSortProperty = {
+      name: 'nonce',
+      order: ElasticSortOrder.descending,
+    };
+    elasticQueryAdapter.sort = [timestamp, nonce];
+
+    if (filter.before || filter.after) {
+      elasticQueryAdapter.filter = [
+        QueryType.Range('timestamp', filter.before ?? 0, filter.after ?? 0),
+      ];
+    }
+
+    const elasticTransactions = await this.elasticService.getList(
+      'transactions',
+      'txHash',
+      elasticQueryAdapter,
+    );
+
+    const transactions: TransactionDetailed[] = [];
+    const transactionsHash: string[] = [];
+
+    for (const elasticTransaction of elasticTransactions) {
+      if (elasticTransaction.scResults) {
+        elasticTransaction.results = elasticTransaction.scResults;
+      }
+      const transaction = ApiUtils.mergeObjects(
+        new TransactionDetailed(),
+        elasticTransaction,
+      );
+      transactionsHash.push(transaction.txHash);
+      transaction.value = NumberUtils.denominateFloat(transaction.value);
+      if (!transaction.fee.includes('-')) {
+        transaction.fee = NumberUtils.denominateFloat(transaction.fee);
+      } else {
+        transaction.fee = `${'-'}${NumberUtils.denominateFloat(
+          Math.abs(parseFloat(transaction.fee)).toString(),
+        )}`;
+      }
+      if (transaction.data !== null) {
+        transaction.data = Buffer.from(transaction.data, 'base64').toString();
+      }
+      const tokenTransfer = this.getTokenTransfer(elasticTransaction);
+      if (tokenTransfer) {
+        transaction.tokenValue = tokenTransfer.tokenAmount;
+        transaction.tokenIdentifier = tokenTransfer.tokenIdentifier;
+      }
+
+      transactions.push(transaction);
+    }
+
+    if (!this.apiConfigService.getUseLegacyElastic()) {
+      const scResults = await this.getScResultsForAllHashes(transactionsHash);
+      Object.keys(scResults).forEach((txHash) => {
+        scResults[txHash].forEach((txSC) => {
+          transactionsHash.push(txSC.hash);
+        });
+      });
+      const receipts = await this.getReceiptsForAllHashes(transactionsHash);
+      const logs = await this.getLogsForAllHashes(transactionsHash);
+      transactions.forEach((tx, index) => {
+        if (tx.txHash in scResults) {
+          transactions[index].results = scResults[tx.txHash];
+          transactions[index].results.forEach((txSC, indexSCLog) => {
+            if (txSC.hash in logs) {
+              transactions[index].results[indexSCLog].logs = logs[tx.txHash][0];
+            }
+          });
+        }
+        transactions[index].results.forEach((scResult, indexSCResult) => {
+          if (transactions[index].results[indexSCResult].value.includes('-')) {
+            transactions[index].results[
+              indexSCResult
+            ].value = `${'-'}${NumberUtils.denominateFloat(
+              Math.abs(
+                parseFloat(transactions[index].results[indexSCResult].value),
+              ).toString(),
+            )}`;
+          } else {
+            transactions[index].results[indexSCResult].value =
+              NumberUtils.denominateFloat(
+                transactions[index].results[indexSCResult].value,
+              );
+          }
+          if (scResult.data && scResult.data !== '') {
+            transactions[index].results[indexSCResult].data = Buffer.from(
+              transactions[index].results[indexSCResult].data,
+              'base64',
+            ).toString();
+            const data_list =
+              transactions[index].results[indexSCResult].data.split('@');
+            const data_list_hex: string[] = [];
+            if (data_list.length > 1) {
+              data_list.forEach((info: any, kIndex: number) => {
+                const command = tx.data.toString().split('@');
+                if (
+                  (command[0].localeCompare('createNewDelegationContract') ==
+                    0 ||
+                    command[0].localeCompare(
+                      'makeNewContractFromValidatorData',
+                    ) == 0) &&
+                  info.includes('000000') &&
+                  kIndex === 2
+                ) {
+                  data_list_hex.push(AddressUtils.bech32Encode(info));
+                } else {
+                  const val = Buffer.from(info, 'hex').toString();
+                  data_list_hex.push(val);
+                }
+              });
+            } else {
+              if (
+                scResult.data.includes('unbond') ||
+                scResult.data.includes('claim')
+              ) {
+                transactions[index].value = scResult.value;
+              }
+            }
+            transactions[index].results[indexSCResult].data =
+              data_list_hex.join('@');
+          } else {
+            if (
+              transactions[index].data === 'withdraw' ||
+              transactions[index].data === 'reDelegateRewards' ||
+              transactions[index].data === 'claimRewards'
+            ) {
+              if (parseFloat(scResult.value) > 0) {
+                transactions[index].value = scResult.value;
+              }
+            }
+          }
+        });
+
+        if (tx.txHash in receipts) {
+          if (receipts[tx.txHash].length > 0) {
+            transactions[index].receipt = receipts[tx.txHash][0];
+          }
+        }
+
+        if (tx.txHash in logs) {
+          transactions[index].logs = logs[tx.txHash][0];
+          transactions[index].operations = this.getOperationsForTransactionLogs(
+            tx.txHash,
+            logs[tx.txHash],
+          );
+        }
+      });
+    }
+    transactions.forEach((tx, index) => {
+      transactions[index].results.forEach((scResult, indexSCResult) => {
+        if (transactions[index].results[indexSCResult].value.includes('-')) {
+          transactions[index].results[
+            indexSCResult
+          ].value = `${'-'}${NumberUtils.denominateFloat(
+            Math.abs(
+              parseFloat(transactions[index].results[indexSCResult].value),
+            ).toString(),
+          )}`;
+        } else {
+          transactions[index].results[indexSCResult].value =
+            NumberUtils.denominateFloat(
+              transactions[index].results[indexSCResult].value,
+            );
+        }
+        if (scResult.data && scResult.data !== '') {
+          transactions[index].results[indexSCResult].data = Buffer.from(
+            transactions[index].results[indexSCResult].data,
+            'base64',
+          ).toString();
+          const data_list =
+            transactions[index].results[indexSCResult].data.split('@');
+          const data_list_hex: string[] = [];
+          if (data_list.length > 1) {
+            data_list.forEach((info: any, kIndex: number) => {
+              const command = tx.data.toString().split('@');
+              if (
+                (command[0].localeCompare('createNewDelegationContract') == 0 ||
+                  command[0].localeCompare(
+                    'makeNewContractFromValidatorData',
+                  ) == 0) &&
+                info.includes('000000') &&
+                kIndex === 2
+              ) {
+                data_list_hex.push(AddressUtils.bech32Encode(info));
+              } else {
+                const val = Buffer.from(info, 'hex').toString();
+                data_list_hex.push(val);
+              }
+            });
+          } else {
+            if (
+              scResult.data.includes('unbond') ||
+              scResult.data.includes('claim')
+            ) {
+              transactions[index].value = scResult.value;
+            }
+          }
+          transactions[index].results[indexSCResult].data =
+            data_list_hex.join('@');
+        } else {
+          if (
+            transactions[index].data === 'withdraw' ||
+            transactions[index].data === 'reDelegateRewards' ||
+            transactions[index].data === 'claimRewards'
+          ) {
+            if (parseFloat(scResult.value) > 0) {
+              transactions[index].value = scResult.value;
+            }
+          }
+        }
+      });
+    });
+    return transactions;
+  }
   async getTransactionCount(filter: TransactionFilter): Promise<number> {
     const elasticQueryAdapter: ElasticQuery = new ElasticQuery();
     elasticQueryAdapter.condition[
@@ -284,7 +522,119 @@ export class TransactionService {
 
     return transactions.firstOrUndefined();
   }
+  private async getScResultsForAllHashes(
+    txHashes: string[],
+  ): Promise<ScResultsMatch> {
+    const elasticQueryAdapterSc: ElasticQuery = new ElasticQuery();
+    elasticQueryAdapterSc.pagination = { from: 0, size: 10000 };
 
+    const timestamp: ElasticSortProperty = {
+      name: 'timestamp',
+      order: ElasticSortOrder.ascending,
+    };
+    elasticQueryAdapterSc.sort = [timestamp];
+
+    const queries = txHashes.map((tx) => {
+      return QueryType.Match('originalTxHash', tx);
+    });
+    elasticQueryAdapterSc.condition.should = queries;
+    let scResults: any[] =
+      await this.elasticService.getSCResultsForTransactionHashes(
+        elasticQueryAdapterSc,
+      );
+    scResults = scResults.map((document: any) =>
+      this.elasticService.formatItem(document, 'scHash'),
+    );
+    const matchTX: ScResultsMatch = {};
+    for (const scResult of scResults) {
+      scResult.hash = scResult.scHash;
+      delete scResult.scHash;
+      if (scResult.originalTxHash in matchTX) {
+        matchTX[scResult.originalTxHash].push(
+          ApiUtils.mergeObjects(new SmartContractResult(), scResult),
+        );
+      } else {
+        matchTX[scResult.originalTxHash] = [
+          ApiUtils.mergeObjects(new SmartContractResult(), scResult),
+        ];
+      }
+    }
+
+    return matchTX;
+  }
+
+  private async getReceiptsForAllHashes(
+    txHashes: string[],
+  ): Promise<ReceiptsMatch> {
+    const elasticQueryAdapterSc: ElasticQuery = new ElasticQuery();
+    elasticQueryAdapterSc.pagination = { from: 0, size: 10000 };
+
+    const timestamp: ElasticSortProperty = {
+      name: 'timestamp',
+      order: ElasticSortOrder.ascending,
+    };
+    elasticQueryAdapterSc.sort = [timestamp];
+
+    const queries = txHashes.map((tx) => {
+      return QueryType.Match('receiptHash', tx);
+    });
+    elasticQueryAdapterSc.condition.should = queries;
+    let receipts: any[] =
+      await this.elasticService.getReceiptsForTransactionHashes(
+        elasticQueryAdapterSc,
+      );
+    receipts = receipts.map((document: any) =>
+      this.elasticService.formatItem(document, 'receiptHash'),
+    );
+
+    const matchTX: ReceiptsMatch = {};
+    for (const receipt of receipts) {
+      if (receipt._source.receiptHash in matchTX) {
+        matchTX[receipt._source.receiptHash].push(
+          ApiUtils.mergeObjects(new TransactionReceipt(), receipt._source),
+        );
+      } else {
+        matchTX[receipt._source.receiptHash] = [
+          ApiUtils.mergeObjects(new TransactionReceipt(), receipt._source),
+        ];
+      }
+    }
+
+    return matchTX;
+  }
+
+  private async getLogsForAllHashes(txHashes: string[]): Promise<LogsMatch> {
+    const elasticQueryAdapterSc: ElasticQuery = new ElasticQuery();
+    elasticQueryAdapterSc.pagination = { from: 0, size: 10000 };
+
+    const timestamp: ElasticSortProperty = {
+      name: 'timestamp',
+      order: ElasticSortOrder.ascending,
+    };
+    elasticQueryAdapterSc.sort = [timestamp];
+
+    const queries = txHashes.map((tx) => {
+      return QueryType.Match('_id', tx);
+    });
+    elasticQueryAdapterSc.condition.should = queries;
+    const logs: any[] = await this.elasticService.getLogsForTransactionHashes(
+      elasticQueryAdapterSc,
+    );
+    const matchTX: LogsMatch = {};
+    for (const log of logs) {
+      if (log._id in matchTX) {
+        matchTX[log._id].push(
+          ApiUtils.mergeObjects(new TransactionLog(), log._source),
+        );
+      } else {
+        matchTX[log._id] = [
+          ApiUtils.mergeObjects(new TransactionLog(), log._source),
+        ];
+      }
+    }
+
+    return matchTX;
+  }
   async tryGetTransactionFromElastic(
     txHash: string,
   ): Promise<TransactionDetailed | null> {
